@@ -13,7 +13,15 @@ func main() {
 
 	lib.setActions([]verblib.Action{
 		verblib.Action{
-			triggers: []verblib.Trigger{},
+			Triggers: []verblib.Trigger{
+
+				verblib.ArgTrigger{
+
+					ExpectedValue:"commit",
+					ExpectedPosition: 1,
+				}
+			},
+
 		},
 	})
 }
