@@ -23,6 +23,16 @@ func main() {
 					PlotageArea: []uint{1, 1},
 				},
 			},
+			Entries: []verblib.Entry{
+				verblib.FlagEntry{
+					Name:        "message",
+					Identifiers: []string{"-m", "--m", "-message", "--message"},
+					Required:    true,
+				},
+			},
 		},
 	})
 }
+
+// test by
+// go run examples/Triggers/Triggers.go  commit
