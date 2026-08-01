@@ -11,4 +11,9 @@ func main() {
 	// Build deps via an adapter (JSON file store + real clock) and inject.
 	lib := verblib.New(verbadapter.New(os.Args))
 
+	lib.setActions([]verblib.Action{
+		verblib.Action{
+			triggers: []verblib.Trigger{},
+		},
+	})
 }
