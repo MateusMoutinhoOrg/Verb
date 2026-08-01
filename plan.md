@@ -1,4 +1,3 @@
-- rename the Project to Verb
 - Create the Samples and the Api (enought to understand the Project)
 - Prompt claude to ajust the project
 - Publish the v0.0.1 version
