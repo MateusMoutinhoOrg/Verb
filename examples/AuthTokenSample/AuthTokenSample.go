@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
-	agnostypes "github.com/MateusMoutinhoOrg/Agnos/sandbox/contracts/api"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
+	verbtypes "github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/api"
 )
 
 // A real service caches the short-lived bearer token it gets from an auth
@@ -24,7 +24,7 @@ func authenticate() string {
 
 // token returns a valid bearer token, authenticating only when the cached
 // one is missing or has expired (the classic cache-aside pattern).
-func token(l agnostypes.Lib) string {
+func token(l verbtypes.Lib) string {
 	if entry, ok := l.Get(tokenKey); ok {
 		return entry.Value // cache HIT — reuse the live token
 	}
@@ -36,7 +36,7 @@ func token(l agnostypes.Lib) string {
 
 func main() {
 	// Build deps via an adapter (JSON file store + real clock) and inject.
-	l := agnoslib.New(agnosadapter.New("authtoken.json"))
+	l := verblib.New(verbadapter.New("authtoken.json"))
 
 	// Three back-to-back requests: only the first authenticates; the
 	// other two reuse the cached token.

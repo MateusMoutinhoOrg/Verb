@@ -93,13 +93,13 @@ It accepts a contract struct and returns a contract struct. The caller decides w
 
 ```go
 import (
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 // This line is in examples/, outside the wall — the only place
 // an adapter and the sandbox meet.
-l := agnoslib.New(agnosadapter.New("data.json"))
+l := verblib.New(verbadapter.New("data.json"))
 ```
 
 For how the injected value then travels through the object graph, see [DepsMechanic.md](/docs/Explanations/DepsMechanic.md). For why the contracts are structs rather than interfaces, see [StructContracts.md](/docs/Explanations/StructContracts.md).

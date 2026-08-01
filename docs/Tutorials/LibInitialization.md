@@ -8,7 +8,7 @@ Covers installing the library and initializing it with the standard adapter in a
 ## Workflow
 1. Install the lib:
    ```bash
-   go get github.com/MateusMoutinhoOrg/Agnos@v0.0.7
+   go get github.com/MateusMoutinhoOrg/Verb@v0.0.7
    ```
 2. Create a file called `main.go` with the following code:
    ```go
@@ -16,16 +16,16 @@ Covers installing the library and initializing it with the standard adapter in a
 
    // 1. Import the standard adapter and the lib
    import (
-       agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-       agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+       verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+       verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
    )
 
    func main() {
        // 2. Create deps via an adapter (the "opinionated" part)
-       deps := agnosadapter.New("cache.json")
+       deps := verbadapter.New("cache.json")
 
        // 3. Inject deps into the pure library — a key/value cache with TTL
-       l := agnoslib.New(deps)
+       l := verblib.New(deps)
 
        // 4. Use the library — it never knows which adapter is behind the scenes
        l.Set("greeting", "hello world", 60)

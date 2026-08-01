@@ -46,13 +46,13 @@ package main
 import (
     "time"
 
-    agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-    agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+    verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+    verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-    deps := agnosadapter.New("cache.json")
-    l := agnoslib.New(deps)
+    deps := verbadapter.New("cache.json")
+    l := verblib.New(deps)
 
     l.Set("token", "abc123", 30)
     entry, ok := l.Get("token")

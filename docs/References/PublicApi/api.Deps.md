@@ -31,18 +31,18 @@ import (
 	"fmt"
 	"time"
 
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/memory"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/memory"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-	myDeps := agnosadapter.New()
+	myDeps := verbadapter.New()
 
 	// Correct: replace the clock while it is still a plain deps value.
 	frozen := time.Unix(0, 0)
 	myDeps.Now = func() time.Time { return frozen }
 
-	l := agnoslib.New(myDeps)
+	l := verblib.New(myDeps)
 
 	// Wrong: the factories already captured l — this assignment is inert.
 	l.Deps.Now = time.Now

@@ -3,16 +3,16 @@ package main
 import (
 	"fmt"
 
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
 	// 1. Build deps via an adapter (JSON file store + real clock).
-	deps := agnosadapter.New("kvcache.json")
+	deps := verbadapter.New("kvcache.json")
 
 	// 2. Inject deps into the pure library — a key/value cache with TTL.
-	l := agnoslib.New(deps)
+	l := verblib.New(deps)
 
 	// 3. Store a value that stays valid for 60 seconds.
 	l.Set("greeting", "hello world", 60)

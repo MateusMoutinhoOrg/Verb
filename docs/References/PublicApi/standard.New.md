@@ -32,13 +32,13 @@ package main
 import (
 	"fmt"
 
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-	d := agnosadapter.New("cache.json")
-	l := agnoslib.New(d)
+	d := verbadapter.New("cache.json")
+	l := verblib.New(d)
 
 	l.Set("greeting", "hello world", 60)
 	if entry, ok := l.Get("greeting"); ok {

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
-	agnostypes "github.com/MateusMoutinhoOrg/Agnos/sandbox/contracts/api"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
+	verbtypes "github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/api"
 )
 
 // This sample caches a web page for 60 seconds: repeated reads inside the
@@ -21,7 +21,7 @@ const targetURL = "https://httpbin.org/uuid"
 
 // fetchCached serves url from the cache when a live entry exists and only
 // performs the HTTP request on a miss, then caches the body for 60 seconds.
-func fetchCached(l agnostypes.Lib, url string) (body string, cached bool, err error) {
+func fetchCached(l verbtypes.Lib, url string) (body string, cached bool, err error) {
 	if entry, ok := l.Get(url); ok {
 		return entry.Value, true, nil // cache HIT — no network call
 	}
@@ -43,7 +43,7 @@ func fetchCached(l agnostypes.Lib, url string) (body string, cached bool, err er
 }
 
 func main() {
-	l := agnoslib.New(agnosadapter.New("webpage.json"))
+	l := verblib.New(verbadapter.New("webpage.json"))
 
 	// Poll every 25s. Within the 60s TTL the body is served from cache;
 	// once it expires, the next poll fetches a fresh (different) page.

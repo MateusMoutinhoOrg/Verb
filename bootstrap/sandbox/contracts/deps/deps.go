@@ -1,6 +1,6 @@
 package deps
 
-import "github.com/MateusMoutinhoOrg/Agnos/bootstrap/sandbox/contracts/deps/agnosdeps"
+import "github.com/MateusMoutinhoOrg/Verb/bootstrap/sandbox/contracts/deps/verbdeps"
 
 // Deps is the dependency contract every bootstrap adapter must satisfy.
 // Like every contract in this template it is a struct of fields, not an
@@ -12,7 +12,7 @@ import "github.com/MateusMoutinhoOrg/Agnos/bootstrap/sandbox/contracts/deps/agno
 type Deps struct {
 	// Println writes a line to the library's output.
 	Println func(a ...any)
-	// CacheLib is the embedded Agnos cache library, already initialized by
+	// CacheLib is the embedded Verb cache library, already initialized by
 	// the adapter.
-	CacheLib agnosdeps.Lib
+	CacheLib verbdeps.Lib
 }

@@ -122,10 +122,10 @@ This is the everyday testing path: freeze time, stub one call, leave the rest of
 
 ## Consuming a Library That Uses This Pattern
 
-The payoff shows when one Agnos-style library depends on another. The consuming sandbox may not import the embedded library — that would be a third-party import — so it restates the shape it needs in its own contracts, and the adapter fills it.
+The payoff shows when one Verb-style library depends on another. The consuming sandbox may not import the embedded library — that would be a third-party import — so it restates the shape it needs in its own contracts, and the adapter fills it.
 
 ```go
-// bootstrap/sandbox/contracts/deps/agnosdeps/agnosdeps.go — inside the sandbox
+// bootstrap/sandbox/contracts/deps/verbdeps/verbdeps.go — inside the sandbox
 type Lib struct {
 	Set func(key string, value string, ttlSeconds int)
 	Get func(key string) (Entry, bool)
@@ -134,24 +134,24 @@ type Lib struct {
 // bootstrap/sandbox/contracts/deps/deps.go — the embedded lib is one plain field
 type Deps struct {
 	Println  func(a ...any)
-	CacheLib agnosdeps.Lib
+	CacheLib verbdeps.Lib
 }
 ```
 
 ```go
 // bootstrap/adapters/standard/standard.go — outside the sandbox
-func CacheLibFactory(s *StandardAdapter) agnosdeps.Lib {
-	inner := agnoslib.New(agnosadapter.New(s.cacheFilePath))
+func CacheLibFactory(s *StandardAdapter) verbdeps.Lib {
+	inner := verblib.New(verbadapter.New(s.cacheFilePath))
 
-	return agnosdeps.Lib{
+	return verbdeps.Lib{
 		Set: inner.Set, // identical signature: assigned straight across
-		Get: func(key string) (agnosdeps.Entry, bool) {
+		Get: func(key string) (verbdeps.Entry, bool) {
 			// only Get needs a wrapper, because Entry is a distinct named type on each side
 			entry, found := inner.Get(key)
 			if !found {
-				return agnosdeps.Entry{}, false
+				return verbdeps.Entry{}, false
 			}
-			return agnosdeps.Entry{Value: entry.Value, ExpiresAt: entry.ExpiresAt, IsExpired: entry.IsExpired}, true
+			return verbdeps.Entry{Value: entry.Value, ExpiresAt: entry.ExpiresAt, IsExpired: entry.IsExpired}, true
 		},
 	}
 }
@@ -175,11 +175,11 @@ That moves one guarantee from the compiler to the author:
 There is a second cost, specific to factories: **the `Deps` field is read-only once the struct is returned.** The closures capture the struct the factories ran over, so patching a copy has no effect on behavior.
 
 ```go
-l := agnoslib.New(myDeps)
+l := verblib.New(myDeps)
 l.Deps.Now = func() time.Time { return time.Unix(0, 0) } // does nothing
 
 myDeps.Now = func() time.Time { return time.Unix(0, 0) } // patch here instead
-l = agnoslib.New(myDeps)
+l = verblib.New(myDeps)
 ```
 
 Replace behavior on the `deps.Deps` value **before** calling `lib.New` — that path is shown above and in [DepsMechanic.md](/docs/Explanations/DepsMechanic.md).

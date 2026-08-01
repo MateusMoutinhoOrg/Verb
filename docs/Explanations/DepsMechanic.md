@@ -39,14 +39,14 @@ The simplest setup: an adapter builds a ready-to-use `deps.Deps`.
 package main
 
 import (
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
 	// The standard adapter fills every field of deps.Deps
-	myDeps := agnosadapter.New("data.json")
-	l := agnoslib.New(myDeps)
+	myDeps := verbadapter.New("data.json")
+	l := verblib.New(myDeps)
 
 	l.Set("greeting", "hello world", 60)
 	if entry, ok := l.Get("greeting"); ok {
@@ -69,20 +69,20 @@ package main
 import (
 	"time"
 
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
 	// 1. Get the default implementation from an adapter
-	myDeps := agnosadapter.New("data.json")
+	myDeps := verbadapter.New("data.json")
 
 	// 2. Replace only the clock — Load and Store stay as the adapter built them
 	now := time.Unix(0, 0)
 	myDeps.Now = func() time.Time { return now }
 
 	// 3. Inject — the lib sees a normal deps.Deps
-	l := agnoslib.New(myDeps)
+	l := verblib.New(myDeps)
 	l.Set("k", "v", 60) // expires 60s after time 0
 
 	// 4. Jump the clock past expiry — no real waiting needed
@@ -106,15 +106,15 @@ package main
 import (
 	"time"
 
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
-	agnosdeps "github.com/MateusMoutinhoOrg/Agnos/sandbox/contracts/deps"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
+	verbdeps "github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/deps"
 )
 
 func main() {
 	// 1. Build your own implementation, keeping records in a plain map
 	store := map[string]string{}
 
-	myDeps := agnosdeps.Deps{
+	myDeps := verbdeps.Deps{
 		Now: time.Now,
 		Load: func(key string) (string, int64, bool) {
 			v, ok := store[key]
@@ -126,7 +126,7 @@ func main() {
 	}
 
 	// 2. Inject it into the library
-	l := agnoslib.New(myDeps)
+	l := verblib.New(myDeps)
 
 	// 3. Use the library normally
 	l.Set("k", "v", 60)

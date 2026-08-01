@@ -67,20 +67,20 @@ Conversely, nothing outside the sandbox may reach into it beyond its three publi
 
 ## Import Aliases
 
-Any file that **consumes** the library from outside it — [examples/](/examples/), the adapter in `bootstrap/` that wires the embedded lib, and third-party consumers — imports it under `agnos`-prefixed aliases, so each call site says which layer it belongs to:
+Any file that **consumes** the library from outside it — [examples/](/examples/), the adapter in `bootstrap/` that wires the embedded lib, and third-party consumers — imports it under `verb`-prefixed aliases, so each call site says which layer it belongs to:
 
 | Import | Alias |
 |--------|-------|
-| `adapters/<name>` | `agnosadapter` |
-| `sandbox` | `agnoslib` |
-| `sandbox/contracts/api` | `agnostypes` |
-| `sandbox/contracts/deps` | `agnosdeps` |
+| `adapters/<name>` | `verbadapter` |
+| `sandbox` | `verblib` |
+| `sandbox/contracts/api` | `verbtypes` |
+| `sandbox/contracts/deps` | `verbdeps` |
 
 ```go
 import (
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
-	agnostypes "github.com/MateusMoutinhoOrg/Agnos/sandbox/contracts/api"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
+	verbtypes "github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/api"
 )
 ```
 

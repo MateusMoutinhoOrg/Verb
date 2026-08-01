@@ -9,8 +9,8 @@ package example_factories
 import (
 	"time"
 
-	"github.com/MateusMoutinhoOrg/Agnos/sandbox/contracts/api"
-	"github.com/MateusMoutinhoOrg/Agnos/sandbox/contracts/deps"
+	"github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/api"
+	"github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/deps"
 )
 
 // ---------------------------------------------------------------

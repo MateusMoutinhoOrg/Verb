@@ -95,13 +95,13 @@ go run ./examples/<example>/<example>.go
 ---
 
 ## `/bootstrap/`
-A second, self-contained Agnos library — same three trees (`sandbox/`, `adapters/`, `examples/`) and the same rules — demonstrating how one Agnos-compliant library **embeds** another. Its sandbox reaches nothing outside itself, so it never imports the root library: the embedded library arrives as one plain `Deps` field.
+A second, self-contained Verb library — same three trees (`sandbox/`, `adapters/`, `examples/`) and the same rules — demonstrating how one Verb-compliant library **embeds** another. Its sandbox reaches nothing outside itself, so it never imports the root library: the embedded library arrives as one plain `Deps` field.
 
 | Path | Description |
 |------|-------------|
 | `sandbox/contracts/deps/deps.go` | The `Deps` struct, including `CacheLib` — the embedded library, held as a locally declared contract struct |
-| `sandbox/contracts/deps/agnosdeps/agnosdeps.go` | Copy of the embedded library's `api` structs, declared inside the sandbox so the sandbox never imports the embedded library |
-| `adapters/<name>/<name>.go` | Its `CacheLibFactory` initializes the embedded library with the embedded library's own adapter, and copies its `api` fields onto the local `agnosdeps` ones |
+| `sandbox/contracts/deps/verbdeps/verbdeps.go` | Copy of the embedded library's `api` structs, declared inside the sandbox so the sandbox never imports the embedded library |
+| `adapters/<name>/<name>.go` | Its `CacheLibFactory` initializes the embedded library with the embedded library's own adapter, and copies its `api` fields onto the local `verbdeps` ones |
 | `examples/<example>/<example>.go` | Self-contained `package main` wiring a bootstrap adapter into the bootstrap lib |
 
 The copying lives in the adapter because only code outside the sandbox may import the embedded library. Because both sides are structs of function fields, the copy is field assignment: a wrapper is needed only where a named type differs between the two declarations. See [StructContracts.md](/docs/Explanations/StructContracts.md).

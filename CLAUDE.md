@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Agnos is a **Go library template** demonstrating OS-independent Dependency Injection. The value is in the *structure and documentation conventions*, not the (deliberately trivial) example code. Most "features" here are `Example*`-prefixed placeholders meant to be replaced when the template is adapted to a real library.
+Verb is a **Go library template** demonstrating OS-independent Dependency Injection. The value is in the *structure and documentation conventions*, not the (deliberately trivial) example code. Most "features" here are `Example*`-prefixed placeholders meant to be replaced when the template is adapted to a real library.
 
 ## Commands
 
@@ -34,14 +34,14 @@ Two trade-offs, neither caught by the compiler: **completeness is unchecked** �
 
 `sandbox/` is a **closed sandbox**: nothing in it may import `adapters/`, `examples/`, a third-party module, or an OS-bound stdlib package (`os`, `net`, `syscall`, …). Every such effect is a `Deps` field reached through `l.Deps`. This is a binding rule — see `docs/References/RULES.md` and `docs/Explanations/SandboxIsolation.md`.
 
-- **`sandbox/new.go`** — package `lib`, the only wiring point consumers touch: `New(deps.Deps) api.Lib`. Never imports `adapters/`. Importers alias it: `agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"`.
+- **`sandbox/new.go`** — package `lib`, the only wiring point consumers touch: `New(deps.Deps) api.Lib`. Never imports `adapters/`. Importers alias it: `verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"`.
 - **`sandbox/contracts/deps/deps.go`** — the `Deps` **struct**. Adding a requirement = adding a function field here. This is the contract every adapter must fill.
 - **`sandbox/contracts/api/api.go`** — the output structs the lib hands back (`Lib`, `Entry`, …), each leading with a `Deps deps.Deps` field. Every field must be exported, or `sandbox/internal/` cannot fill it. **Every type in the project is declared here**, never in `internal/`. Types only — no function bodies.
 - **`sandbox/internal/lib/`** — the lib's factories: one `<Field>Factory(l *api.Lib)` per function field of `api.Lib`, each returning the field's closure, plus `New(d deps.Deps) api.Lib` assigning every factory's return value into the matching field (`sandbox/new.go` just delegates to it). Go's `internal/` rule keeps it unreachable from `adapters/`, `examples/`, and consumers.
 - **`sandbox/internal/<object>/`** — one package per object the lib creates, holding that object's `<Field>Factory` functions plus a `New(d deps.Deps, …) api.<Object>` constructor that runs them all. There is no separate `Factory` aggregate — `New` is the aggregate. **Factories only, no type declarations.** Packages here take no `internal_` prefix — the `internal/` parent already says it.
 - **`adapters/<name>/`** — outside the sandbox; the only place OS-bound and third-party code is allowed. Each declares a struct carrying a `Deps deps.Deps` field, one `<Field>Factory(a *<Name>Adapter)` per `Deps` field returning that field's value, and a `New(...) deps.Deps` constructor that assigns each factory's return value into `a.Deps` and returns it — the populated **contract struct**, never the adapter type. `standard` is the default adapter (Go stdlib only).
 - **`examples/<name>/<name>.go`** — outside the sandbox; self-contained `package main` programs wiring an adapter into the lib.
-- **`bootstrap/`** — a second Agnos library embedding the root one, demonstrating the pattern when a lib's dependency is another lib built the same way: its sandbox declares a *copy* of the embedded api structs (`sandbox/contracts/deps/agnosdeps/`) and its adapter's `CacheLibFactory` fills them by field assignment — the case where a factory assigns a value rather than a closure, because the field is a struct.
+- **`bootstrap/`** — a second Verb library embedding the root one, demonstrating the pattern when a lib's dependency is another lib built the same way: its sandbox declares a *copy* of the embedded api structs (`sandbox/contracts/deps/verbdeps/`) and its adapter's `CacheLibFactory` fills them by field assignment — the case where a factory assigns a value rather than a closure, because the field is a struct.
 
 Every object propagates `Deps` to the objects it creates: a lib factory's closure calls `<object>.New(l.Deps, …)`, which stores the deps on the new api struct before running that object's factories — see `GetFactory` in `sandbox/internal/lib/lib.go`.
 
@@ -65,7 +65,7 @@ Changes are governed by required-reading docs, and several actions **must** upda
 
 ## Conventions
 
-- Code that consumes the library from outside it (`examples/`, the `bootstrap/` adapter, third-party callers) aliases every import with the `agnos` prefix: `agnosadapter` (`adapters/<name>`), `agnoslib` (`sandbox`), `agnostypes` (`sandbox/contracts/api`), `agnosdeps` (`sandbox/contracts/deps`). Files belonging to the library itself — `sandbox/` and `adapters/` — keep the plain package names. See the Import Aliases rule in `docs/References/RULES.md`.
-- Module path is `github.com/MateusMoutinhoOrg/Agnos`; renaming it is a documented procedure — see `docs/Tutorials/RenameModule.md`.
+- Code that consumes the library from outside it (`examples/`, the `bootstrap/` adapter, third-party callers) aliases every import with the `verb` prefix: `verbadapter` (`adapters/<name>`), `verblib` (`sandbox`), `verbtypes` (`sandbox/contracts/api`), `verbdeps` (`sandbox/contracts/deps`). Files belonging to the library itself — `sandbox/` and `adapters/` — keep the plain package names. See the Import Aliases rule in `docs/References/RULES.md`.
+- Module path is `github.com/MateusMoutinhoOrg/Verb`; renaming it is a documented procedure — see `docs/Tutorials/RenameModule.md`.
 - Public-facing lib API entries each get a detail page under `docs/References/PublicApi/` named `<pkg>.<Symbol>.md`.
 - `docs/References/Meta/` holds the specifications: one directory per kind of file, each pairing a `Specs.md` (how the file must be shaped) with a `sample`. Never browse it — always locate a spec through `docs/References/Specs.md`.

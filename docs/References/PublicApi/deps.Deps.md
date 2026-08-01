@@ -35,8 +35,8 @@ import (
 	"fmt"
 	"time"
 
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
-	agnosdeps "github.com/MateusMoutinhoOrg/Agnos/sandbox/contracts/deps"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
+	verbdeps "github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/deps"
 )
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 	now := time.Unix(0, 0)
 	store := map[string]string{} // value only; expiry ignored for brevity
 
-	d := agnosdeps.Deps{
+	d := verbdeps.Deps{
 		Now: func() time.Time { return now },
 		Load: func(key string) (string, int64, bool) {
 			v, ok := store[key]
@@ -56,7 +56,7 @@ func main() {
 		},
 	}
 
-	l := agnoslib.New(d)
+	l := verblib.New(d)
 
 	l.Set("k", "v", 60)
 	entry, _ := l.Get("k")

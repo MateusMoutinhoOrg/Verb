@@ -1,7 +1,7 @@
-# Agnos
+# Verb
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/MateusMoutinhoOrg/Agnos.svg)](https://pkg.go.dev/github.com/MateusMoutinhoOrg/Agnos)
-[![Release](https://img.shields.io/github/v/release/MateusMoutinhoOrg/Agnos)](https://github.com/MateusMoutinhoOrg/Agnos/releases/latest)
+[![Go Reference](https://pkg.go.dev/badge/github.com/MateusMoutinhoOrg/Verb.svg)](https://pkg.go.dev/github.com/MateusMoutinhoOrg/Verb)
+[![Release](https://img.shields.io/github/v/release/MateusMoutinhoOrg/Verb)](https://github.com/MateusMoutinhoOrg/Verb/releases/latest)
 [![Go Version](https://img.shields.io/badge/go-%3E%3D1.22-blue)](go.mod)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -11,7 +11,7 @@ An OS-independent Go library template demonstrating **Dependency Injection** wit
 
 ## Overview
 
-Agnos is a structured Go template that showcases how to build libraries that are fully decoupled from their runtime dependencies. It uses a **Dependency Injection** pattern in which:
+Verb is a structured Go template that showcases how to build libraries that are fully decoupled from their runtime dependencies. It uses a **Dependency Injection** pattern in which:
 
 - **`/sandbox/contracts/`** defines the `Deps` contract every adapter must fill and the `api` structs the library hands back.
 - **`/adapters/`** contains opinionated, concrete implementations of the `Deps` contract.
@@ -26,7 +26,7 @@ This design ensures the library remains portable, testable, and easy to extend w
 
 **1. Install the library:**
 ```bash
-go get github.com/MateusMoutinhoOrg/Agnos
+go get github.com/MateusMoutinhoOrg/Verb
 ```
 
 **2. Create a `main.go` file:**
@@ -34,16 +34,16 @@ go get github.com/MateusMoutinhoOrg/Agnos
 package main
 
 import (
-    agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-    agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+    verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+    verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
     // 1. Create deps via an adapter (the "opinionated" part)
-    deps := agnosadapter.New(3)
+    deps := verbadapter.New(3)
 
     // 2. Inject deps into the pure library
-    l := agnoslib.New(deps)
+    l := verblib.New(deps)
 
     // 3. Use the library — it never knows which adapter is behind the scenes
     obj := l.NewExampleObject(1, "2")

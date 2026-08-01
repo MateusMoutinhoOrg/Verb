@@ -3,15 +3,15 @@ package standard
 import (
 	"fmt"
 
-	"github.com/MateusMoutinhoOrg/Agnos/bootstrap/sandbox/contracts/deps"
-	"github.com/MateusMoutinhoOrg/Agnos/bootstrap/sandbox/contracts/deps/agnosdeps"
+	"github.com/MateusMoutinhoOrg/Verb/bootstrap/sandbox/contracts/deps"
+	"github.com/MateusMoutinhoOrg/Verb/bootstrap/sandbox/contracts/deps/verbdeps"
 
-	agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-	agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 // StandardAdapter fills deps.Deps using the Go standard library plus the
-// embedded Agnos cache library, which CacheLibFactory wires up once.
+// embedded Verb cache library, which CacheLibFactory wires up once.
 type StandardAdapter struct {
 	// Deps is the contract this adapter fills; its factories assign into it.
 	Deps deps.Deps
@@ -28,8 +28,8 @@ func PrintlnFactory(s *StandardAdapter) func(a ...any) {
 }
 
 // CacheLibFactory returns the value that fills deps.Deps.CacheLib, by
-// initializing the embedded Agnos cache library with the embedded library's
-// own standard adapter, then copying it onto the agnosdeps.Lib the bootstrap
+// initializing the embedded Verb cache library with the embedded library's
+// own standard adapter, then copying it onto the verbdeps.Lib the bootstrap
 // sandbox declares. It returns a value instead of a closure, because
 // CacheLib is a struct field, not a function field.
 //
@@ -41,16 +41,16 @@ func PrintlnFactory(s *StandardAdapter) func(a ...any) {
 //
 // Only code outside the sandbox may import the embedded library, so the copy
 // happens here.
-func CacheLibFactory(s *StandardAdapter) agnosdeps.Lib {
-	inner := agnoslib.New(agnosadapter.New(s.cacheFilePath))
-	return agnosdeps.Lib{
+func CacheLibFactory(s *StandardAdapter) verbdeps.Lib {
+	inner := verblib.New(verbadapter.New(s.cacheFilePath))
+	return verbdeps.Lib{
 		Set: inner.Set,
-		Get: func(key string) (agnosdeps.Entry, bool) {
+		Get: func(key string) (verbdeps.Entry, bool) {
 			entry, found := inner.Get(key)
 			if !found {
-				return agnosdeps.Entry{}, false
+				return verbdeps.Entry{}, false
 			}
-			return agnosdeps.Entry{
+			return verbdeps.Entry{
 				Value:     entry.Value,
 				ExpiresAt: entry.ExpiresAt,
 				IsExpired: entry.IsExpired,

@@ -1,14 +1,14 @@
 package lib
 
 import (
-	"github.com/MateusMoutinhoOrg/Agnos/bootstrap/sandbox/contracts/api"
-	"github.com/MateusMoutinhoOrg/Agnos/bootstrap/sandbox/contracts/deps"
+	"github.com/MateusMoutinhoOrg/Verb/bootstrap/sandbox/contracts/api"
+	"github.com/MateusMoutinhoOrg/Verb/bootstrap/sandbox/contracts/deps"
 )
 
 // TestFuncFactory returns the closure that fills api.Lib.TestFunc, which
 // exercises the embedded library reached through the Deps: it stores a
 // record, reads it back, and prints it. The embedded library is never
-// imported here — the adapter injects it as an agnosdeps.Lib struct, so
+// imported here — the adapter injects it as an verbdeps.Lib struct, so
 // calling it is just calling a function field.
 func TestFuncFactory(l *api.Lib) func() {
 	return func() {

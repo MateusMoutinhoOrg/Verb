@@ -8,8 +8,8 @@ Covers storing a value in the cache with `Set` and reading it back with `Get`, i
 ## Workflow
 1. Initialize the lib as shown in [LibInitialization.md](/docs/Tutorials/LibInitialization.md):
    ```go
-   deps := agnosadapter.New("cache.json")
-   l := agnoslib.New(deps)
+   deps := verbadapter.New("cache.json")
+   l := verblib.New(deps)
    ```
 2. Store a value under a key with `Set`, passing the time-to-live in seconds:
    ```go
@@ -40,13 +40,13 @@ Covers storing a value in the cache with `Set` and reading it back with `Get`, i
 package main
 
 import (
-    agnosadapter "github.com/MateusMoutinhoOrg/Agnos/adapters/standard"
-    agnoslib "github.com/MateusMoutinhoOrg/Agnos/sandbox"
+    verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
+    verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-    deps := agnosadapter.New("cache.json")
-    l := agnoslib.New(deps)
+    deps := verbadapter.New("cache.json")
+    l := verblib.New(deps)
 
     // Keep "session-id" for 60 seconds
     l.Set("session-id", "abc123", 60)
