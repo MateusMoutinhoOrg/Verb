@@ -23,11 +23,6 @@ func main() {
 					PlotageArea: []uint{1, 1},
 				},
 			},
-			Entries:[]verblib.Entry{
-				verblib.{
-					
-				}
-			}
 		},
 	})
 }
