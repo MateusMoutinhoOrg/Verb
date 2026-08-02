@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/api"
-	"github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/deps"
 )
 
 // timestampLayout is the format every Timestamp getter parses values with.
@@ -354,14 +353,12 @@ func GetTimestampKeyValuesFactory(l *api.Lib) func(prefixes []string, occurrence
 	}
 }
 
-// New builds the api.Lib entry point: it snapshots Deps.Args() once into
-// Args, allocates a same-length Used tracking slice, stores the injected
-// deps, and runs every lib factory over it to fill its function fields.
-// Adding a function field to api.Lib means adding its factory call here.
-func New(d deps.Deps) api.Lib {
-	args := d.Args()
+// New builds the api.Lib entry point: it stores args on Args, allocates a
+// same-length Used tracking slice, and runs every lib factory over it to
+// fill its function fields. Adding a function field to api.Lib means adding
+// its factory call here.
+func New(args []string) api.Lib {
 	l := api.Lib{
-		Deps: d,
 		Args: args,
 		Used: make([]bool, len(args)),
 	}

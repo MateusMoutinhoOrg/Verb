@@ -8,8 +8,7 @@ Covers checking a boolean flag with `IsPresent` and reading a flag's value with 
 ## Workflow
 1. Initialize the lib as shown in [LibInitialization.md](/docs/Tutorials/LibInitialization.md):
    ```go
-   deps := verbadapter.New(os.Args[1:])
-   l := verblib.New(deps)
+   l := verblib.New(os.Args[1:])
    ```
 2. Check a boolean flag with `IsPresent`, listing every spelling you accept:
    ```go
@@ -54,13 +53,11 @@ import (
     "fmt"
     "os"
 
-    verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
     verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-    deps := verbadapter.New(os.Args[1:])
-    l := verblib.New(deps)
+    l := verblib.New(os.Args[1:])
 
     quiet := l.IsPresent([]string{"-q", "--quiet"})
 

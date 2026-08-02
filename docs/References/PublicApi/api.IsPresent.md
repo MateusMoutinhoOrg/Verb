@@ -35,12 +35,11 @@ import (
 	"fmt"
 	"os"
 
-	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-	l := verblib.New(verbadapter.New(os.Args[1:]))
+	l := verblib.New(os.Args[1:])
 
 	quiet := l.IsPresent([]string{"-q", "--quiet"})
 	fmt.Println("quiet:", quiet)

@@ -19,7 +19,7 @@ Copying these files carries over the template's **generic** guides and specifica
 | `docs/References/TemplateFileActions.md` | This page |
 | `docs/Tutorials/*` | The workflow guides |
 | `docs/Explanations/*` | The explanations of the library's mechanics and features |
-| `sandbox/new.go` | The `New` constructor storing `Deps` on `api.Lib` and running the internal factories over it |
+| `sandbox/new.go` | The `New` constructor storing `args` on `api.Lib` and running the internal factories over it |
 
 ---
 
@@ -29,8 +29,7 @@ Written from scratch for the library being built or adapted. Nothing of the temp
 
 | Path | Description | Specification |
 |------|-------------|---------------|
-| `adapters/<name>/<name>.go` | One adapter per opinionated implementation of the `Deps` contract | [Adapters](/docs/References/Meta/Adapters/Specs.md) |
-| `sandbox/internal/lib/*` | The lib's field factories and the `New` constructor running them all, reaching every dependency through `l.Deps` | [LibFunctions](/docs/References/Meta/LibFunctions/Specs.md) |
+| `sandbox/internal/lib/*` | The lib's field factories and the `New` constructor running them all | [LibFunctions](/docs/References/Meta/LibFunctions/Specs.md) |
 | `sandbox/internal/<object>/*` | One package per object the library hands back: its field factories and the `New` constructor running them all | [LibObjects](/docs/References/Meta/LibObjects/Specs.md) |
 | `docs/References/PublicApi/*` | One detail page per public API entry | [ReferenceDocs](/docs/References/Meta/ReferenceDocs/Specs.md) |
 | `docs/References/<Name>.md` | Any reference page the new library needs beyond the public API index | [ReferenceDocs](/docs/References/Meta/ReferenceDocs/Specs.md) |
@@ -46,9 +45,7 @@ Kept in place, with their content replaced by the new library's. The file keeps 
 | Path | Rewrite with | Specification |
 |------|--------------|---------------|
 | `README.md` | The new library's overview, quick start, badges, Doc Index, and Samples section | [Readme](/docs/References/Meta/Readme/Specs.md) |
-| `sandbox/contracts/deps/deps.go` | The `Deps` function fields the new library requires | [Deps](/docs/References/Meta/Deps/Specs.md) |
 | `sandbox/contracts/api/api.go` | The `Lib` struct and one struct per object the new library hands back | [Outputs](/docs/References/Meta/Outputs/Specs.md) |
-| `adapters/standard/standard.go` | The default adapter, filling the new `Deps` contract | [Adapters](/docs/References/Meta/Adapters/Specs.md) |
 | `docs/References/PublicApi.md` | The index of the new public API entries | [ReferenceDocs](/docs/References/Meta/ReferenceDocs/Specs.md) |
 | `docs/References/Structure.md` | The layout of the new library | [Structure](/docs/References/Meta/Structure/Specs.md) |
 
@@ -60,7 +57,6 @@ The template's example content. Removed once the new library's own files exist.
 
 | Path | Description |
 |------|-------------|
-| `adapters/*` — except `adapters/standard/` | The example alternative adapters |
 | `sandbox/internal/*` | The example lib factories and object packages |
 | `docs/References/PublicApi/*` | The example API detail pages |
 | `examples/*` | The example samples |

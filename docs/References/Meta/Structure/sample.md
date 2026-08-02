@@ -36,14 +36,13 @@ The closed sandbox — the library, its public entry point, its contracts, and i
 
 | File | Description | Spec |
 |------|-------------|------|
-| `new.go` | The `New` constructor taking a `Deps` and returning an `api.Lib` | |
+| `new.go` | The `New` constructor taking plain arguments and returning an `api.Lib` | |
 
 ### `/sandbox/contracts/`
 The public contract structs the project is wired through — the only part of the sandbox the outside imports.
 
 | File | Description | Spec |
 |------|-------------|------|
-| `deps/deps.go` | The `Deps` struct, one function field per injectable behavior | Deps |
 | `api/api.go` | The structs the library hands back to callers | Outputs |
 
 ### `/sandbox/internal/`
@@ -51,19 +50,8 @@ The factories filling the `api` structs' function fields, unreachable from outsi
 
 | File | Description | Spec |
 |------|-------------|------|
-| `lib/lib.go` | `Lib`: reaches deps via `l.Deps.<Field>(...)` and creates the lib's objects | LibFunctions |
-| `<object>/<object>.go` | The factories filling an `api` struct's fields, plus its `New` constructor propagating `Deps` | LibObjects |
-
----
-
-## `/adapters/`
-Outside the sandbox. Opinionated implementations of the [`Deps`](#sandboxcontracts) contract, and the only place OS-bound and third-party code is allowed.
-
-### `/adapters/<name>/`
-
-| File | Description | Spec |
-|------|-------------|------|
-| `<name>.go` | A struct carrying a `Deps` field, one `<Field>Factory` per `Deps` field, and the `New(...) deps.Deps` factory running them all | Adapters |
+| `lib/lib.go` | `Lib`: fills its own fields and creates the lib's objects | LibFunctions |
+| `<object>/<object>.go` | The factories filling an `api` struct's fields, plus its `New` constructor | LibObjects |
 
 ---
 
@@ -72,4 +60,4 @@ Outside the sandbox. Runnable examples demonstrating how to use the library.
 
 | File | Description | Spec |
 |------|-------------|------|
-| `<example>/<example>.go` | Self-contained `package main` wiring an adapter into the lib | Examples |
+| `<example>/<example>.go` | Self-contained `package main` calling `lib.New` | Examples |

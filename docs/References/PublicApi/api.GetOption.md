@@ -47,12 +47,11 @@ import (
 	"fmt"
 	"os"
 
-	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-	l := verblib.New(verbadapter.New(os.Args[1:]))
+	l := verblib.New(os.Args[1:])
 
 	// ./cli --retries 3 --timeout 1.5 --since 2024-01-02T15:04:05Z
 	retries, err := l.GetIntOption([]string{"--retries"}, 0)

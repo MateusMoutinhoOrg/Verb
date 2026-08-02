@@ -21,7 +21,7 @@ One sentence saying who this theme is for / what it covers.
 | [/docs/...](/docs/...) | What the reader accomplishes with it | Tutorial / Reference / Explanation |
 ```
 
-- **Theme ordering follows user need**: themes for *using* the library come first (initialization, API usage, samples), then themes for *extending* it (lib functions, dependencies, adapters), and finally themes for *maintaining* the repo (docs management, template adaptation, project rules). A new reader must hit what they need without scrolling past maintainer-only content.
+- **Theme ordering follows user need**: themes for *using* the library come first (initialization, API usage, samples), then themes for *extending* it (lib functions, objects), and finally themes for *maintaining* the repo (docs management, template adaptation, project rules). A new reader must hit what they need without scrolling past maintainer-only content.
 - **A doc may appear under multiple themes** — duplicate rows across themes are expected and encouraged.
 - **Every top-level doc under `docs/` must appear in at least one theme.** No orphans. Files indexed by an index doc (specifications under `Meta/`, API detail pages under `PublicApi/`) are covered through that index doc's row.
 - **Link text and link target must match** and point to the real file location (a Tutorial always links into `/docs/Tutorials/`, never another directory).
@@ -38,7 +38,7 @@ One sentence saying who this theme is for / what it covers.
 6. **Must Read callout**: The required-reading table (Rules, Structure, Specs).
 7. **Theme sections**, ordered usage → extension → maintenance, each with its description and Doc Index table:
    - *Library Usage*, *Samples* (usage) — the Samples theme also carries the table of runnable examples.
-   - *Extending the Library*, *Dependency Management* (extension).
+   - *Extending the Library* (extension).
    - *Documentation Management*, *Template Adaptation*, *Project Rules & Structure* (maintenance).
    - Themes may be added, merged, or renamed when content fits better another way, as long as the ordering rule holds.
 8. **License Ref**: A reference link to the project's license file.

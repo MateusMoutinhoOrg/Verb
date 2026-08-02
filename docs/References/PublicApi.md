@@ -1,7 +1,7 @@
 # Public API
 
 ## Description
-Index of every public-facing entry of the library. Callers hold **structs of function fields** declared in `sandbox/contracts/api` and `sandbox/contracts/deps`; the **factories** that fill those fields live in `sandbox/internal/` and are unreachable from outside `sandbox/`. See [StructContracts.md](/docs/Explanations/StructContracts.md).
+Index of every public-facing entry of the library. Callers hold a **struct of function fields** declared in `sandbox/contracts/api`; the **factories** that fill those fields live in `sandbox/internal/` and are unreachable from outside `sandbox/`. See [StructContracts.md](/docs/Explanations/StructContracts.md).
 
 ---
 
@@ -10,28 +10,16 @@ Index of every public-facing entry of the library. Callers hold **structs of fun
 ### [api.Lib](/docs/References/PublicApi/api.Lib.md)
 The library entry point — an argv parser with a flag/option/positional-argument mechanic. Returned by `lib.New`; exposes all library functions as fields.
 
-### [deps.Deps](/docs/References/PublicApi/deps.Deps.md)
-The dependency contract every adapter must fill: a single function returning the argument vector to parse.
-
 ---
 
 ## Functions
 
 ### [lib.New](/docs/References/PublicApi/lib.New.md)
-Injects a `deps.Deps` into the library and returns an `api.Lib`.
-
-### [standard.New](/docs/References/PublicApi/standard.New.md)
-Creates a `deps.Deps` using the standard library adapter, wrapping the real process argv.
-
-### [memory.New](/docs/References/PublicApi/memory.New.md)
-Creates a `deps.Deps` using the memory adapter, wrapping a fixed argv for tests.
+Builds an `api.Lib` from the argument vector to parse.
 
 ---
 
 ## Fields
-
-### [api.Lib.Deps](/docs/References/PublicApi/api.Deps.md)
-The injected dependency set the struct was built with; read-only after construction.
 
 ### [api.Lib.Args](/docs/References/PublicApi/api.Args.md)
 Snapshot of the argument vector being parsed.

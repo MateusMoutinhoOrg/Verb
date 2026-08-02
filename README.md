@@ -5,24 +5,23 @@
 [![Go Version](https://img.shields.io/badge/go-%3E%3D1.22-blue)](go.mod)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-An OS-independent Go **argv parser** library demonstrating **Dependency Injection** with a clean separation between pure library logic and adapter implementations.
+An OS-independent Go **argv parser** library demonstrating a **struct-of-functions** public API with a clean separation between the pure library and its consumers.
 
 ---
 
 ## Overview
 
-Verb is a structured Go template that showcases how to build libraries that are fully decoupled from their runtime dependencies. The library itself lives in **`/sandbox/`**: a **closed sandbox** that reaches nothing outside itself — no adapter, no third-party module, no OS-bound standard-library package. Everything it can do arrives through an injected `Deps`.
+Verb is a structured Go template that showcases how to build libraries exposed as plain data instead of interfaces. The library itself lives in **`/sandbox/`**: a **closed sandbox** that reaches nothing outside itself — no third-party module, no OS-bound standard-library package. Every input it needs arrives as a plain function argument, e.g. `lib.New(os.Args[1:])`.
 
 ```
-adapters/  ──▶  sandbox/  ◀──  examples/
-(reaches the OS)  (closed)     (wires the two together)
+sandbox/  ◀──  examples/
+(closed)       (consumes the lib)
 ```
 
-- **`/sandbox/`** is the closed library and its single entry point: it takes a `Deps` and returns an `api.Lib`.
-  - **`/sandbox/contracts/`** holds the public types everything is wired through — the `Deps` contract every adapter must fill, and the `api` structs the library hands back. Contracts are **structs of function fields**, never interfaces. This is the only part of the sandbox the outside world imports.
-  - **`/sandbox/internal/`** holds the pure library logic as **factories** — functions that take a pointer to an `api` struct and fill its function fields with closures reading that struct's `Deps`. It declares no types and is unreachable from outside `sandbox/`.
-- **`/adapters/`** sits outside the sandbox and holds opinionated, concrete implementations of the `Deps` contract, filled by the **same factories** the sandbox uses — the carrier is the adapter struct rather than an `api` struct. This is the only place OS-bound and third-party code is allowed.
-- **`/examples/`** sits outside the sandbox too, and is the only place an adapter and the library are wired together.
+- **`/sandbox/`** is the closed library and its single entry point: it takes the argument vector to parse and returns an `api.Lib`.
+  - **`/sandbox/contracts/`** holds the public types everything is wired through — the `api` structs the library hands back. Contracts are **structs of function fields**, never interfaces. This is the only part of the sandbox the outside world imports.
+  - **`/sandbox/internal/`** holds the pure library logic as **factories** — functions that take a pointer to an `api` struct and fill its function fields with closures reading that struct's own state. It declares no types and is unreachable from outside `sandbox/`.
+- **`/examples/`** sits outside the sandbox and is the only place `os.Args` is read and handed to the library.
 
 This design ensures the library remains portable, testable, and easy to extend without modifying its core. See [SandboxIsolation.md](/docs/Explanations/SandboxIsolation.md) for the full mechanic and [StructContracts.md](/docs/Explanations/StructContracts.md) for why the contracts are structs and how factories fill them.
 
@@ -42,19 +41,14 @@ package main
 import (
     "os"
 
-    verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
     verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-    // 1. Create deps via an adapter (the "opinionated" part:
-    //    hands back the real process argv)
-    deps := verbadapter.New(os.Args[1:])
+    // 1. Build the library directly from the real process argv
+    l := verblib.New(os.Args[1:])
 
-    // 2. Inject deps into the pure library — an argv parser
-    l := verblib.New(deps)
-
-    // 3. Use the library — it never knows which adapter is behind the scenes
+    // 2. Use the library
     quiet := l.IsPresent([]string{"-q", "--quiet"})
     output, err := l.GetStringOption([]string{"-o", "--output"}, 0)
     if err != nil {
@@ -86,13 +80,11 @@ For consuming the lib as a user: install it, parse arguments, and understand wha
 
 | Doc | Description | Type |
 | --- | --- | --- |
-| [/docs/Tutorials/LibInitialization.md](/docs/Tutorials/LibInitialization.md) | Install the lib, create deps via an adapter, and run a first program | Tutorial |
+| [/docs/Tutorials/LibInitialization.md](/docs/Tutorials/LibInitialization.md) | Install the lib, call lib.New, and run a first program | Tutorial |
 | [/docs/Tutorials/ParseOption.md](/docs/Tutorials/ParseOption.md) | Check a flag with IsPresent and read its value with GetStringOption | Tutorial |
 | [/docs/Tutorials/UseUnusedMechanic.md](/docs/Tutorials/UseUnusedMechanic.md) | Drain the leftover positional arguments with GetNextStringArg | Tutorial |
 | [/docs/Tutorials/RunSample.md](/docs/Tutorials/RunSample.md) | Browse and run the executable samples in the examples/ directory | Tutorial |
 | [/docs/References/PublicApi.md](/docs/References/PublicApi.md) | Index of all public structs, functions, and fields with detail links | Reference |
-| [/docs/References/Adapters.md](/docs/References/Adapters.md) | Lists every shipped adapter and when to use each one | Reference |
-| [/docs/Explanations/DepsMechanic.md](/docs/Explanations/DepsMechanic.md) | How the dependency-injection mechanism works, including custom setups | Explanation |
 | [/docs/Explanations/SandboxIsolation.md](/docs/Explanations/SandboxIsolation.md) | Why the library lives in a closed sandbox and what it may not import | Explanation |
 | [/docs/Explanations/StructContracts.md](/docs/Explanations/StructContracts.md) | Why every contract is a struct of function fields, and how factories fill them | Explanation |
 
@@ -126,23 +118,9 @@ Adding new lib functionality and exposing it in the public API.
 | Doc | Description | Type |
 | --- | --- | --- |
 | [/docs/Tutorials/AddLibFunction.md](/docs/Tutorials/AddLibFunction.md) | Declare a function field on api.Lib and write the factory that fills it | Tutorial |
-| [/docs/Tutorials/AddLibObject.md](/docs/Tutorials/AddLibObject.md) | Add an object created by the lib, with its deps propagated by its New constructor | Tutorial |
+| [/docs/Tutorials/AddLibObject.md](/docs/Tutorials/AddLibObject.md) | Add an object created by the lib, with its own New constructor | Tutorial |
 | [/docs/Tutorials/ExposePublicApi.md](/docs/Tutorials/ExposePublicApi.md) | Publish a lib function, object, or field in the public API index | Tutorial |
 | [/docs/References/PublicApi.md](/docs/References/PublicApi.md) | Index of all public structs, functions, and fields with detail links | Reference |
-
----
-
-## Dependency Management
-
-Working with the `Deps` contract and the adapters that satisfy it.
-
-| Doc | Description | Type |
-| --- | --- | --- |
-| [/docs/Tutorials/AddDependency.md](/docs/Tutorials/AddDependency.md) | Add a field to the Deps contract and fill it in every adapter | Tutorial |
-| [/docs/Tutorials/AddAdapter.md](/docs/Tutorials/AddAdapter.md) | Create a new opinionated implementation of the Deps contract | Tutorial |
-| [/docs/References/Adapters.md](/docs/References/Adapters.md) | Lists every shipped adapter and when to use each one | Reference |
-| [/docs/Explanations/DepsMechanic.md](/docs/Explanations/DepsMechanic.md) | How the dependency-injection mechanism works, including custom setups | Explanation |
-| [/docs/Explanations/StructContracts.md](/docs/Explanations/StructContracts.md) | Why every contract is a struct of function fields, and how factories fill them | Explanation |
 
 ---
 
@@ -165,8 +143,8 @@ Turning the template into a real library of your own.
 
 | Doc | Description | Type |
 | --- | --- | --- |
-| [/docs/Tutorials/ForkTemplate.md](/docs/Tutorials/ForkTemplate.md) | Use this repo as a GitHub template to start a new DI library | Tutorial |
-| [/docs/Tutorials/AdaptExistingLib.md](/docs/Tutorials/AdaptExistingLib.md) | Convert a pre-existing library to this DI structure | Tutorial |
+| [/docs/Tutorials/ForkTemplate.md](/docs/Tutorials/ForkTemplate.md) | Use this repo as a GitHub template to start a new library | Tutorial |
+| [/docs/Tutorials/AdaptExistingLib.md](/docs/Tutorials/AdaptExistingLib.md) | Convert a pre-existing library to this struct-of-functions structure | Tutorial |
 | [/docs/Tutorials/RenameModule.md](/docs/Tutorials/RenameModule.md) | Rename the Go module path and update all internal imports | Tutorial |
 | [/docs/References/TemplateFileActions.md](/docs/References/TemplateFileActions.md) | The action each template file takes when adapting: copy, create, rewrite, or delete | Reference |
 

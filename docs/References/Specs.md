@@ -20,12 +20,11 @@ This index is the **only** place a specification is located from. Never browse `
 | Readme | Root `README.md` | [Specs](/docs/References/Meta/Readme/Specs.md) · [sample](/docs/References/Meta/Readme/sample.md) |
 | Rules | `docs/References/RULES.md` | [Specs](/docs/References/Meta/Rules/Specs.md) · [sample](/docs/References/Meta/Rules/sample.md) |
 | Structure | `docs/References/Structure.md` | [Specs](/docs/References/Meta/Structure/Specs.md) · [sample](/docs/References/Meta/Structure/sample.md) |
-| AdaptersDoc | `docs/References/Adapters.md` | [Specs](/docs/References/Meta/AdaptersDoc/Specs.md) · [sample](/docs/References/Meta/AdaptersDoc/sample.md) |
 | ReferenceDocs | Any other `.md` under `docs/References/`, except this index and `docs/References/Meta/` | [Specs](/docs/References/Meta/ReferenceDocs/Specs.md) · [sample](/docs/References/Meta/ReferenceDocs/sample.md) |
 | ExplanationDocs | Any `.md` under `docs/Explanations/` | [Specs](/docs/References/Meta/ExplanationDocs/Specs.md) · [sample](/docs/References/Meta/ExplanationDocs/sample.md) |
 | TutorialDocs | Any `.md` under `docs/Tutorials/` | [Specs](/docs/References/Meta/TutorialDocs/Specs.md) · [sample](/docs/References/Meta/TutorialDocs/sample.md) |
 
-GeneralDoc applies on top of the others: a tutorial follows **both** GeneralDoc and TutorialDocs. AdaptersDoc likewise builds on ReferenceDocs — `Adapters.md` follows all three.
+GeneralDoc applies on top of the others: a tutorial follows **both** GeneralDoc and TutorialDocs.
 
 ---
 
@@ -33,15 +32,13 @@ GeneralDoc applies on top of the others: a tutorial follows **both** GeneralDoc 
 
 | Spec | Applies To | Links |
 |------|------------|-------|
-| Factories | **Every** file declaring `<Field>Factory` functions — `sandbox/internal/` and `adapters/` alike | [Specs](/docs/References/Meta/Factories/Specs.md) · [sample](./Meta/Factories/sample.go) |
-| Deps | `sandbox/contracts/deps/deps.go` | [Specs](/docs/References/Meta/Deps/Specs.md) · [sample](./Meta/Deps/sample.go) |
+| Factories | **Every** file declaring `<Field>Factory` functions, in `sandbox/internal/` | [Specs](/docs/References/Meta/Factories/Specs.md) · [sample](./Meta/Factories/sample.go) |
 | Outputs | `sandbox/contracts/api/api.go` | [Specs](/docs/References/Meta/Outputs/Specs.md) · [sample](./Meta/Outputs/sample.go) |
-| Adapters | `adapters/<name>/<name>.go` | [Specs](/docs/References/Meta/Adapters/Specs.md) · [sample](./Meta/Adapters/sample.go) |
 | LibFunctions | Factories filling `api.Lib` fields, in `sandbox/internal/lib/` | [Specs](/docs/References/Meta/LibFunctions/Specs.md) · [sample](./Meta/LibFunctions/sample.go) |
 | LibObjects | Factories and constructors for objects the lib creates, in `sandbox/internal/<object>/` | [Specs](/docs/References/Meta/LibObjects/Specs.md) · [sample](./Meta/LibObjects/sample.go) |
 | Examples | `examples/<example>/<example>.go` | [Specs](/docs/References/Meta/Examples/Specs.md) · [sample](./Meta/Examples/sample.go) |
 
-Factories applies on top of the others, as GeneralDoc does for documentation: an adapter follows **both** Factories and Adapters, and a lib function follows **both** Factories and LibFunctions.
+Factories applies on top of the others, as GeneralDoc does for documentation: a lib function follows **both** Factories and LibFunctions.
 
 ---
 

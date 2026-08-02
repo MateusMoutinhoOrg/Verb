@@ -44,13 +44,12 @@ import (
 	"fmt"
 	"os"
 
-	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
 	// ./cli -o teste.out teste.c
-	l := verblib.New(verbadapter.New(os.Args[1:]))
+	l := verblib.New(os.Args[1:])
 
 	output, err := l.GetStringOption([]string{"-o", "--output"}, 0)
 	if err != nil {

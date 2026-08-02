@@ -5,18 +5,17 @@
 [![Go Version](https://img.shields.io/badge/go-%3E%3D1.22-blue)](go.mod)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-An OS-independent Go library template demonstrating **Dependency Injection** with a clean separation between pure library logic and adapter implementations.
+An OS-independent Go library template demonstrating a **struct-of-functions** public API with a clean separation between the pure library and its consumers.
 
 ---
 
 ## Overview
 
-Verb is a structured Go template that showcases how to build libraries that are fully decoupled from their runtime dependencies. It uses a **Dependency Injection** pattern in which:
+Verb is a structured Go template that showcases how to build libraries exposed as plain data instead of interfaces. It uses a pattern in which:
 
-- **`/sandbox/contracts/`** defines the `Deps` contract every adapter must fill and the `api` structs the library hands back.
-- **`/adapters/`** contains opinionated, concrete implementations of the `Deps` contract.
-- **`/sandbox/internal/`** contains the pure library logic as factories filling the `api` contract structs — it never imports concrete implementations.
-- **`/sandbox/`** is the entry point: it takes a `Deps` and returns an `api.Lib`.
+- **`/sandbox/contracts/`** defines the `api` structs the library hands back.
+- **`/sandbox/internal/`** contains the pure library logic as factories filling the `api` contract structs.
+- **`/sandbox/`** is the entry point: it takes plain arguments and returns an `api.Lib`.
 
 This design ensures the library remains portable, testable, and easy to extend without modifying its core.
 
@@ -34,18 +33,14 @@ go get github.com/MateusMoutinhoOrg/Verb
 package main
 
 import (
-    verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
     verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-    // 1. Create deps via an adapter (the "opinionated" part)
-    deps := verbadapter.New(3)
+    // 1. Build the library from plain arguments
+    l := verblib.New(3)
 
-    // 2. Inject deps into the pure library
-    l := verblib.New(deps)
-
-    // 3. Use the library — it never knows which adapter is behind the scenes
+    // 2. Use the library
     obj := l.NewExampleObject(1, "2")
     println(obj.ExampleObjectMethod())
 }
@@ -73,9 +68,9 @@ For consuming the lib as a user: install it, run a first program, and understand
 
 | Doc | Description | Type |
 | --- | --- | --- |
-| [/docs/Tutorials/LibInitialization.md](/docs/Tutorials/LibInitialization.md) | Install the lib, create deps via an adapter, and run a first program | Tutorial |
+| [/docs/Tutorials/LibInitialization.md](/docs/Tutorials/LibInitialization.md) | Install the lib, call `lib.New`, and run a first program | Tutorial |
 | [/docs/Tutorials/RunSample.md](/docs/Tutorials/RunSample.md) | Browse and run the executable samples in the examples/ directory | Tutorial |
-| [/docs/Explanations/DepsMechanic.md](/docs/Explanations/DepsMechanic.md) | How the dependency-injection mechanism works, including custom setups | Explanation |
+| [/docs/Explanations/StructContracts.md](/docs/Explanations/StructContracts.md) | How the struct-of-functions public API works | Explanation |
 
 ---
 
@@ -93,18 +88,6 @@ Creating and running the example programs under `examples/`.
 | Sample | Description |
 |----------|-------------|
 | [ExampleSample](/examples/ExampleSample/ExampleSample.go) | How to use the library |
-
----
-
-## Dependency Management
-
-Working with the `Deps` contract and the adapters that satisfy it.
-
-| Doc | Description | Type |
-| --- | --- | --- |
-| [/docs/Tutorials/AddDependency.md](/docs/Tutorials/AddDependency.md) | Add a field to the Deps contract and implement it in every adapter | Tutorial |
-| [/docs/Tutorials/AddAdapter.md](/docs/Tutorials/AddAdapter.md) | Create a new opinionated implementation of the Deps contract | Tutorial |
-| [/docs/Explanations/DepsMechanic.md](/docs/Explanations/DepsMechanic.md) | How the dependency-injection mechanism works, including custom setups | Explanation |
 
 ---
 

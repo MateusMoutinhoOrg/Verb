@@ -16,75 +16,69 @@ Before creating or editing any file, read [Specs.md](/docs/References/Specs.md) 
 
 ## Sandbox Isolation
 
-[sandbox/](/sandbox/) is a closed sandbox. No file inside it may import [adapters/](/adapters/), [examples/](/examples/), a third-party module, or an OS-bound standard-library package (`os`, `net`, `os/exec`, `syscall`, …). Every such effect must be declared as a function field on the `Deps` contract and reached through `l.Deps`, following [AddDependency.md](/docs/Tutorials/AddDependency.md). The mechanic is explained in [SandboxIsolation.md](/docs/Explanations/SandboxIsolation.md).
+[sandbox/](/sandbox/) is a closed sandbox. No file inside it may import [examples/](/examples/), a third-party module, or an OS-bound standard-library package (`os`, `net`, `os/exec`, `syscall`, …). Every input the library needs from the outside world arrives as a plain function argument, e.g. `lib.New(args []string)`. The mechanic is explained in [SandboxIsolation.md](/docs/Explanations/SandboxIsolation.md).
 
-Contracts are **structs of function fields**, never interfaces — in [sandbox/contracts/deps](/sandbox/contracts/deps/) and [sandbox/contracts/api](/sandbox/contracts/api/) alike. Every type in the project is declared in `sandbox/contracts/`; [sandbox/internal/](/sandbox/internal/) declares no types at all. See [StructContracts.md](/docs/Explanations/StructContracts.md).
+The `api` contract is a **struct of function fields**, never an interface — see [sandbox/contracts/api](/sandbox/contracts/api/). Every type in the project is declared there; [sandbox/internal/](/sandbox/internal/) declares no types at all. See [StructContracts.md](/docs/Explanations/StructContracts.md).
 
 ---
 
 ## Factory Pattern
 
-Every struct of function fields in this project — an `api` struct inside the sandbox, a `deps.Deps` filled by an adapter outside it — is filled by **factories**, never by methods bound into fields and never by an internal mirror type. When you write or edit any file holding `<Field>Factory` functions, follow the [Factories](./Meta/Factories/Specs.md) specification on top of the one governing that file's tree.
+Every struct of function fields in this project — an `api` struct inside the sandbox — is filled by **factories**, never by methods bound into fields and never by an internal mirror type. When you write or edit any file holding `<Field>Factory` functions, follow the [Factories](./Meta/Factories/Specs.md) specification on top of the one governing that file's tree.
 
-A factory takes a pointer to the **carrier** — the struct holding the state the closure reads — and returns exactly one field's value; the caller assigns it:
+A factory takes a pointer to the **carrier** — the api struct holding the state the closure reads — and returns exactly one field's value; the caller assigns it:
 
 ```go
 // sandbox/internal/lib/ — the carrier is the api struct being filled
-func SetFactory(l *api.Lib) func(key string, value string, ttlSeconds int) {
-	return func(key string, value string, ttlSeconds int) {
-		l.Deps.Store(key, value, l.Deps.Now().Unix()+int64(ttlSeconds))
+func IsPresentFactory(l *api.Lib) func(flags []string) bool {
+	return func(flags []string) bool {
+		for i, a := range l.Args {
+			if l.Used[i] {
+				continue
+			}
+			if matchesFlag(a, flags) {
+				l.Used[i] = true
+				return true
+			}
+		}
+		return false
 	}
 }
 
-func New(d deps.Deps) api.Lib {
-	l := api.Lib{Deps: d}
-	l.Set = SetFactory(&l)
+func New(args []string) api.Lib {
+	l := api.Lib{Args: args, Used: make([]bool, len(args))}
+	l.IsPresent = IsPresentFactory(&l)
 	return l
-}
-
-// adapters/<name>/ — the carrier is the adapter, whose Deps field is the contract
-func NowFactory(s *StandardAdapter) func() time.Time {
-	return func() time.Time { return time.Now() }
-}
-
-func New() deps.Deps {
-	s := &StandardAdapter{}
-	s.Deps.Now = NowFactory(s)
-	return s.Deps
 }
 ```
 
-Four rules follow, and none of them is checked by the compiler:
+Three rules follow, and none of them is checked by the compiler:
 
-- Every api struct whose behavior needs dependencies declares a `Deps deps.Deps` field, and closures reach dependencies through it — `l.Deps.<Field>(...)`, read inside the closure, never captured at factory time. Every adapter struct declares the same field, as the contract its factories fill.
+- Every api struct's closures reach state through the carrier pointer — `l.Args`, `l.Used` — read inside the closure, never captured at factory time.
 - Every field factory must be called and its return value assigned from its package's `New(...)` constructor, which is the factory aggregate — there is no separate `Factory` function. A field no factory fills stays nil and panics on first call.
-- A `New` constructor returns the filled **contract struct** by value — `api.Lib`, `api.<Object>`, or `adapter.Deps` — never the carrier type of an adapter.
-- The `Deps` field is **read-only once the struct is returned**: closures capture the struct the factories ran over, so a caller patching `Deps` on a copy changes nothing. Patch the `deps.Deps` value before calling `lib.New`.
+- A `New` constructor returns the filled **contract struct** by value — `api.Lib` or `api.<Object>` — never a private carrier type.
 
-Conversely, nothing outside the sandbox may reach into it beyond its three public packages: `sandbox` (package `lib`), `sandbox/contracts/deps`, and `sandbox/contracts/api`.
+Nothing outside the sandbox may reach into it beyond its two public packages: `sandbox` (package `lib`) and `sandbox/contracts/api`.
 
 ---
 
 ## Import Aliases
 
-Any file that **consumes** the library from outside it — [examples/](/examples/), the adapter in `bootstrap/` that wires the embedded lib, and third-party consumers — imports it under `verb`-prefixed aliases, so each call site says which layer it belongs to:
+Any file that **consumes** the library from outside it — [examples/](/examples/) and third-party consumers — imports it under `verb`-prefixed aliases, so each call site says which layer it belongs to:
 
 | Import | Alias |
 |--------|-------|
-| `adapters/<name>` | `verbadapter` |
 | `sandbox` | `verblib` |
 | `sandbox/contracts/api` | `verbtypes` |
-| `sandbox/contracts/deps` | `verbdeps` |
 
 ```go
 import (
-	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 	verbtypes "github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/api"
 )
 ```
 
-An embedding library follows the same shape with its own prefix (`bootstrapadapter`, `bootstraplib`) when it is itself consumed. Files that belong to the library — everything under `sandbox/` and its own [adapters/](/adapters/) — keep the plain package names (`api`, `deps`): there the prefix would be noise, since the import is already local.
+Files that belong to the library — everything under `sandbox/` — keep the plain package names (`api`, `lib`): there the prefix would be noise, since the import is already local.
 
 ---
 

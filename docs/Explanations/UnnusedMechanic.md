@@ -21,13 +21,12 @@ package main
 import (
 	"os"
 
-	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-	// Build deps via an adapter (the real process argv) and inject.
-	lib := verblib.New(verbadapter.New(os.Args[1:]))
+	// Build the lib directly from the real process argv.
+	lib := verblib.New(os.Args[1:])
 
 	// marks -o and teste.out as used
 	output, err := lib.GetStringOption([]string{"-o", "--o", "--output", "--out"}, 0)

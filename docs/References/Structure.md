@@ -2,16 +2,15 @@
 
 This document maps the project **schema** — the kinds of files the project is built from — not every concrete file. A slot with a **Spec** name is governed by a specification; resolve the name through [Specs.md](/docs/References/Specs.md) to get its description and sample.
 
-The project is split into three top-level trees, and the dependency flow between them is one-way:
+The project is split into two top-level trees, and the dependency flow between them is one-way:
 
 ```
-adapters/  ──▶  sandbox/  ◀──  examples/
-(reaches the OS)  (closed)     (wires the two together)
+sandbox/  ◀──  examples/
+(closed)       (consumes the lib)
 ```
 
-- **`/sandbox/`** is a **closed sandbox**: the pure library. Nothing inside it may import `adapters/`, `examples/`, a third-party module, or any OS-bound standard-library package. Every effect it needs arrives through the injected `Deps`. See [SandboxIsolation.md](/docs/Explanations/SandboxIsolation.md).
-- **`/adapters/`** sits outside the sandbox and is the only place OS-bound and third-party code is allowed. Each adapter imports `sandbox/contracts/deps` and nothing else from the sandbox.
-- **`/examples/`** sits outside the sandbox too, and is the only place where an adapter and the sandbox meet.
+- **`/sandbox/`** is a **closed sandbox**: the pure library. Nothing inside it may import `examples/`, a third-party module, or any OS-bound standard-library package — every input it needs arrives as a plain function argument. See [SandboxIsolation.md](/docs/Explanations/SandboxIsolation.md).
+- **`/examples/`** sits outside the sandbox and is the only place `os.Args` is read and handed to the library.
 
 ## Root
 
@@ -25,86 +24,54 @@ adapters/  ──▶  sandbox/  ◀──  examples/
 ---
 
 ## `/sandbox/`
-The closed sandbox — the pure library. It holds its own entry point, the contracts everything is wired through, and the internal implementation. It reaches nothing outside itself: every OS-bound or third-party effect arrives through the injected `Deps`. Its package is named `lib`, so consumers import it as `lib "…/sandbox"` and call `lib.New`.
+The closed sandbox — the pure library. It holds its own entry point, the contract everything is wired through, and the internal implementation. It reaches nothing outside itself. Its package is named `lib`, so consumers import it as `lib "…/sandbox"` and call `lib.New`.
 
 | File | Description | Spec |
 |------|-------------|------|
-| `new.go` | The `New` constructor storing `Deps` on `api.Lib` and running the internal factories over it | |
+| `new.go` | The `New` constructor storing `args` on `api.Lib` and running the internal factories over it | |
 
 ### `/sandbox/contracts/`
-The structs the rest of the project is wired through — the only part of the sandbox anything outside it may import. Contracts hold the project's **public types** and are structs of function fields, never interfaces; see [StructContracts.md](/docs/Explanations/StructContracts.md). Contracts import nothing from `adapters/` or `sandbox/internal/`.
-
-#### `/sandbox/contracts/deps/`
-The contract every adapter must fill.
-
-| File | Description | Spec |
-|------|-------------|------|
-| `deps.go` | The `Deps` struct, one function field per injectable behavior | Deps |
+The structs the rest of the project is wired through — the only part of the sandbox anything outside it may import. Contracts hold the project's **public types** and are structs of function fields, never interfaces; see [StructContracts.md](/docs/Explanations/StructContracts.md). Contracts import nothing from `sandbox/internal/`.
 
 #### `/sandbox/contracts/api/`
 The structs the library hands back to callers.
 
 | File | Description | Spec |
 |------|-------------|------|
-| `api.go` | The `Lib` entry-point struct plus one struct per object the lib creates, each carrying a `Deps` field | Outputs |
+| `api.go` | The `Lib` entry-point struct plus one struct per object the lib creates | Outputs |
 
 ### `/sandbox/internal/`
-**Factories only** — no types. Each package here holds the functions that take a pointer to an [`api`](#sandboxcontractsapi) struct and return closures reading that struct's `Deps`, which the package's `New` constructor assigns into the matching function fields. Types never live here; they stay in `contracts/`. Go's `internal/` rule makes this tree unreachable from outside `sandbox/`, so neither consumers nor `adapters/` can reach in — the sandbox wall is enforced by the compiler, not by convention alone.
+**Factories only** — no types. Each package here holds the functions that take a pointer to an [`api`](#sandboxcontractsapi) struct and return closures reading that struct's state, which the package's `New` constructor assigns into the matching function fields. Types never live here; they stay in `contracts/`. Go's `internal/` rule makes this tree unreachable from outside `sandbox/`.
 
 #### `/sandbox/internal/lib/`
 The entry-point implementation. The `internal/` parent already marks it private, so the package carries no `internal_` prefix.
 
 | File | Description | Spec |
 |------|-------------|------|
-| `lib.go` | One `<Field>Factory(l *api.Lib)` per lib function, each returning a closure, plus the `New(d deps.Deps) api.Lib` constructor that assigns every factory's return value and runs them all | LibFunctions |
+| `lib.go` | One `<Field>Factory(l *api.Lib)` per lib function, each returning a closure, plus the `New(args []string) api.Lib` constructor that assigns every factory's return value and runs them all | LibFunctions |
 
 #### `/sandbox/internal/<object>/`
 One package per object the library creates, named after the object itself.
 
 | File | Description | Spec |
 |------|-------------|------|
-| `<object>.go` | The object's `<Field>Factory` functions, each returning a closure, plus the `New(d deps.Deps, …) api.<Object>` constructor that propagates `Deps` and assigns every factory's return value | LibObjects |
-
----
-
-## `/adapters/`
-Outside the sandbox. Opinionated implementations of the [`Deps`](#sandboxcontractsdeps) contract, each providing a distinct concrete behavior. This is where OS-bound and third-party code lives; an adapter imports `sandbox/contracts/deps` and nothing else from `sandbox/`. An adapter fills its contract with the same **factories** [`sandbox/internal/`](#sandboxinternal) uses — the carrier is the adapter struct, which declares the `Deps` field the factories' return values are assigned into.
-
-### `/adapters/<name>/`
-
-| File | Description | Spec |
-|------|-------------|------|
-| `<name>.go` | A struct carrying a `Deps` field, one `<Field>Factory(a *<Name>Adapter)` per `Deps` field returning a closure, plus the `New(...) deps.Deps` constructor that assigns every factory's return value and runs them all | Adapters |
+| `<object>.go` | The object's `<Field>Factory` functions, each returning a closure, plus the `New(…) api.<Object>` constructor that assigns every factory's return value | LibObjects |
 
 ---
 
 ## `/examples/`
-Outside the sandbox. Runnable examples demonstrating how to use the library — the only place an adapter and the sandbox are wired together.
+Outside the sandbox. Runnable examples demonstrating how to use the library — the only place `os.Args` is read.
 
 ### `/examples/<example>/`
 
 | File | Description | Spec |
 |------|-------------|------|
-| `<example>.go` | Self-contained `package main` wiring an adapter into the lib | Examples |
+| `<example>.go` | Self-contained `package main` calling `lib.New` with the real process argv | Examples |
 
 **Run an example:**
 ```sh
 go run ./examples/<example>/<example>.go
 ```
-
----
-
-## `/bootstrap/`
-A second, self-contained Verb library — same three trees (`sandbox/`, `adapters/`, `examples/`) and the same rules — demonstrating how one Verb-compliant library **embeds** another. Its sandbox reaches nothing outside itself, so it never imports the root library: the embedded library arrives as one plain `Deps` field.
-
-| Path | Description |
-|------|-------------|
-| `sandbox/contracts/deps/deps.go` | The `Deps` struct, including `ArgvLib` — the embedded library, held as a locally declared contract struct |
-| `sandbox/contracts/deps/verbdeps/verbdeps.go` | Copy of the embedded library's `api` structs, declared inside the sandbox so the sandbox never imports the embedded library |
-| `adapters/<name>/<name>.go` | Its `ArgvLibFactory` initializes the embedded library with the embedded library's own adapter, and copies its `api` fields onto the local `verbdeps` ones |
-| `examples/<example>/<example>.go` | Self-contained `package main` wiring a bootstrap adapter into the bootstrap lib |
-
-The copying lives in the adapter because only code outside the sandbox may import the embedded library. Because both sides are structs of function fields, the copy is field assignment: a wrapper is needed only where a named type differs between the two declarations. See [StructContracts.md](/docs/Explanations/StructContracts.md).
 
 ---
 
@@ -120,7 +87,6 @@ Listable material — structures, rules, specifications, and the public API inde
 | `Structure.md` | The project's schema and the purpose of each component | Structure |
 | `Specs.md` | Index of every specification and the files each one governs | |
 | `PublicApi.md` | Index of all public-facing components, linking to their detail pages | ReferenceDocs |
-| `Adapters.md` | Lists every shipped adapter and when to use each one | AdaptersDoc |
 | `TemplateFileActions.md` | The action each template file takes when forking or adapting a library | ReferenceDocs |
 | `<Name>.md` | Any other reference page the library needs | ReferenceDocs |
 

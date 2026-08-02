@@ -7,12 +7,11 @@ import (
 	"strconv"
 
 	"github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/api"
-	"github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/deps"
 )
 
 // ExampleObjectMethodFactory returns the closure that fills
 // api.ExampleLibObject.ExampleObjectMethod, closed over o, so it reads the
-// object's own properties — and its propagated Deps — at call time.
+// object's own properties at call time.
 func ExampleObjectMethodFactory(o *api.ExampleLibObject) func() string {
 	return func() string {
 		propsConcatenated := strconv.Itoa(o.FirstProp) + o.SecondProp
@@ -20,13 +19,11 @@ func ExampleObjectMethodFactory(o *api.ExampleLibObject) func() string {
 	}
 }
 
-// New builds an api.ExampleLibObject from its properties, propagating the
-// library's Deps into it, and runs every object factory over it to fill its
-// function fields. Adding a function field to api.ExampleLibObject means
-// adding its factory call here.
-func New(d deps.Deps, firstProp int, secondProp string) api.ExampleLibObject {
+// New builds an api.ExampleLibObject from its properties and runs every
+// object factory over it to fill its function fields. Adding a function
+// field to api.ExampleLibObject means adding its factory call here.
+func New(firstProp int, secondProp string) api.ExampleLibObject {
 	o := api.ExampleLibObject{
-		Deps:       d,
 		FirstProp:  firstProp,
 		SecondProp: secondProp,
 	}
@@ -36,14 +33,13 @@ func New(d deps.Deps, firstProp int, secondProp string) api.ExampleLibObject {
 
 // ---------------------------------------------------------------
 // The constructor factory below lives in sandbox/internal/lib/, where
-// the object is created with the parent lib's Deps propagated into it.
+// the object is created on behalf of the parent lib.
 // ---------------------------------------------------------------
 
 // NewExampleObjectFactory returns the closure that fills
-// api.Lib.NewExampleObject, creating an ExampleLibObject with the library's
-// injected dependencies automatically wired in.
+// api.Lib.NewExampleObject, creating an ExampleLibObject.
 func NewExampleObjectFactory(l *api.Lib) func(firstProp int, secondProp string) api.ExampleLibObject {
 	return func(firstProp int, secondProp string) api.ExampleLibObject {
-		return example_object.New(l.Deps, firstProp, secondProp)
+		return example_object.New(firstProp, secondProp)
 	}
 }

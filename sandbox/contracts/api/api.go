@@ -2,8 +2,6 @@ package api
 
 import (
 	"time"
-
-	"github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/deps"
 )
 
 // Lib is the entry point handed back by lib.New: an argument-vector (argv)
@@ -44,19 +42,13 @@ import (
 // because counting matches can never fail. IsPresent returns a plain bool
 // for the same reason — checking presence cannot fail either.
 type Lib struct {
-	// Deps is the dependency set injected by lib.New, carried here so every
-	// factory-built function field can reach it. For this library Deps has a
-	// single field, Args, which is only ever called once — see the Args field
-	// below for the snapshot it produces.
-	Deps deps.Deps
-
-	// Args is the snapshot of the argument vector being parsed, taken once
-	// from Deps.Args() when lib.New built this Lib. Every index-based
-	// function (GetStringArg, GetStringOption, GetStringKeyValues, ...)
-	// refers to positions in this slice. It is exported so
-	// sandbox/internal/lib can populate it from another package, but callers
-	// should treat it as read-only: mutating it after construction leaves
-	// Used out of sync and produces undefined matching behavior.
+	// Args is the argument vector being parsed, the same slice lib.New was
+	// called with. Every index-based function (GetStringArg, GetStringOption,
+	// GetStringKeyValues, ...) refers to positions in this slice. It is
+	// exported so sandbox/internal/lib can populate it from another package,
+	// but callers should treat it as read-only: mutating it after
+	// construction leaves Used out of sync and produces undefined matching
+	// behavior.
 	Args []string
 
 	// Used tracks, index for index against Args, which arguments have

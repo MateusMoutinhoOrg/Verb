@@ -1,35 +1,39 @@
-# Dependency Mechanics
+# Struct-of-Functions Output
 
 ## Description
-Explains how the library's dependency injection works: adapters build a `deps.Deps` struct of function fields, and the library calls those functions without knowing which adapter provided them.
+Explains how the library exposes its behavior as a struct of function fields instead of an interface, and how those fields get filled.
 
 ---
 
-## The Deps Contract
+## The Output Struct
 
-`deps.Deps` is a plain struct of function fields — not an interface. Every adapter fills in each field, and the library reaches dependencies only through it:
+`api.Example` is a plain struct whose fields are functions — not an interface. A **factory** fills each field with a closure that reads the struct's other fields at call time:
 
 ```go
-type Deps struct {
-    ExampleDepFunctionA func() int // each field is one injectable behavior
+type Example struct {
+    Count int
+    Double func() int // each field is one exposed behavior
 }
 ```
 
-Because fields are plain functions, any single behavior can be replaced without writing a full adapter.
+Because a field is a plain function, calling it reads exactly like calling a method.
 
 ---
 
-## Overwriting a Dependency
+## Filling the Fields
 
-An adapter's output is just a struct value, so specific behaviors can be swapped before injection:
+A factory takes a pointer to the struct being built and returns the closure for one field; the package's `New` constructor assigns every factory's return value:
 
 ```go
-myDeps := standard.New(3)
-
-// Replace only the behavior you need to change
-myDeps.ExampleDepFunctionA = func() int {
-    return 404
+func DoubleFactory(e *Example) func() int {
+    return func() int { return e.Count * 2 }
 }
 
-l := lib.New(myDeps) // the library is unaware of the change
+func New(count int) Example {
+    e := Example{Count: count}
+    e.Double = DoubleFactory(&e)
+    return e
+}
 ```
+
+The closure reads `e.Count` through the pointer, so it always sees the struct's current state, not a value captured when the factory ran.

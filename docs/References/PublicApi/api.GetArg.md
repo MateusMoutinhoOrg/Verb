@@ -46,12 +46,11 @@ import (
 	"fmt"
 	"os"
 
-	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-	l := verblib.New(verbadapter.New(os.Args[1:]))
+	l := verblib.New(os.Args[1:])
 
 	// ./app test -> first == "test"
 	first, err := l.GetStringArg(0)

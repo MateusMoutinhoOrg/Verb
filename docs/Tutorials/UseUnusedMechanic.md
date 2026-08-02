@@ -49,13 +49,11 @@ import (
     "fmt"
     "os"
 
-    verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
     verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-    deps := verbadapter.New(os.Args[1:])
-    l := verblib.New(deps)
+    l := verblib.New(os.Args[1:])
 
     output, _ := l.GetStringOption([]string{"-o", "--output"}, 0)
 

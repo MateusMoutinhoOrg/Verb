@@ -6,7 +6,6 @@
 
 ```go
 type Lib struct {
-	Deps deps.Deps
 	Args []string
 	Used []bool
 
@@ -38,18 +37,15 @@ type Lib struct {
 
 ## Description
 
-The library entry point, returned by [`lib.New`](/docs/References/PublicApi/lib.New.md). It is an argv parser exposed as a struct of function fields: `lib.New` stores the injected [`deps.Deps`](/docs/References/PublicApi/deps.Deps.md) in `Deps`, snapshots the raw argument vector into `Args`, allocates the matching `Used` tracking slice, then runs the factories in `sandbox/internal/lib/`, each of which fills one function field with a closure reading `Args`/`Used` at call time. Calling a field reads exactly like calling a method — `l.IsPresent([]string{"-q"})`. See [StructContracts.md](/docs/Explanations/StructContracts.md).
+The library entry point, returned by [`lib.New`](/docs/References/PublicApi/lib.New.md). It is an argv parser exposed as a struct of function fields: `lib.New` stores the given argument vector into `Args`, allocates the matching `Used` tracking slice, then runs the factories in `sandbox/internal/lib/`, each of which fills one function field with a closure reading `Args`/`Used` at call time. Calling a field reads exactly like calling a method — `l.IsPresent([]string{"-q"})`. See [StructContracts.md](/docs/Explanations/StructContracts.md).
 
 Every `Get*`/`IsPresent` call marks the argument(s) it matched as read in `Used`; `GetNextStringArg` and its typed variants return the first argument still unread. This is the Unused Mechanic — see [UnnusedMechanic.md](/docs/Explanations/UnnusedMechanic.md).
-
-`Deps` is exported because the library's own factories read it, but it is **read-only after construction**: the closures already captured the struct they were built over, so reassigning `Deps` here does not change behavior. Patch the `deps.Deps` value before calling `lib.New`.
 
 ## Fields
 
 | Field | Description |
 | :--- | :--- |
-| [`Deps deps.Deps`](/docs/References/PublicApi/deps.Deps.md) | The dependency set injected by `lib.New`; read-only after construction. |
-| [`Args []string`](/docs/References/PublicApi/api.Args.md) | Snapshot of the argument vector being parsed. |
+| [`Args []string`](/docs/References/PublicApi/api.Args.md) | The argument vector being parsed. |
 | [`Used []bool`](/docs/References/PublicApi/api.Used.md) | Tracks which positions of `Args` have already been read. |
 | [`IsPresent func(flags []string) bool`](/docs/References/PublicApi/api.IsPresent.md) | Reports whether any of the given flag spellings is present. |
 | [`GetOptionsSize func(flags []string) int`](/docs/References/PublicApi/api.Size.md) | Counts how many arguments match one of the given flags. |

@@ -13,7 +13,7 @@ Covers creating a runnable sample in [examples/](../../examples/) that demonstra
 ## Workflow
 1. Create a directory inside [examples/](../../examples/) named after the feature being demonstrated (e.g., `examples/NewFeatureSample/`).
 2. Inside it, create the sample file with the same name as the directory (e.g., `NewFeatureSample.go`).
-3. Write a runnable `package main` program that builds deps through an adapter, injects them into the lib, and uses the feature. Comment the key parts.
+3. Write a runnable `package main` program that builds the lib with `lib.New(...)` and uses the feature. Comment the key parts.
 4. If the sample needs setup instructions, add a `README.md` in the sample's directory.
 5. Add the sample to the Samples section of the [README.md](/README.md).
 6. Register the new directory and file in [Structure.md](/docs/References/Structure.md).

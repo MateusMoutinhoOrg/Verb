@@ -36,4 +36,4 @@ if err != nil {
 }
 ```
 
-Adapters receive the resolved values as plain arguments — see [DepsMechanic.md](/docs/Explanations/DepsMechanic.md).
+Callers pass the resolved values as plain arguments to the functions that need them.

@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-	// Build deps via an adapter (the real process argv) and inject.
-	lib := verblib.New(verbadapter.New(os.Args[1:]))
+	// Build the lib directly from the real process argv.
+	lib := verblib.New(os.Args[1:])
 
 	// GetOptionsSize counts every "-username <value>" / "--username <value>"
 	// occurrence without consuming anything.

@@ -5,20 +5,17 @@ Index of all public-facing components of the library, grouped by kind, with link
 
 ---
 
-## Interfaces
+## Structs
 
 ### [api.Lib](/docs/References/PublicApi/api.Lib.md)
-The library entry point. Returned by `lib.New`; exposes all library methods.
+The library entry point. Returned by `lib.New`; exposes all library functions as fields.
 
 ### [api.ExampleLibObject](/docs/References/PublicApi/api.ExampleLibObject.md)
-An object created by the library with its dependencies automatically wired in.
+An object created by the library, exposing its own function fields.
 
 ---
 
 ## Functions
 
 ### [lib.New](/docs/References/PublicApi/lib.New.md)
-Injects a `deps.Deps` implementation into the library and returns an `api.Lib`.
-
-### [standard.New](/docs/References/PublicApi/standard.New.md)
-Creates a `deps.Deps` using the standard library adapter.
+Builds an `api.Lib` from the arguments it needs.
