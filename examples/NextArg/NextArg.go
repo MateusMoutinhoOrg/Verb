@@ -16,7 +16,6 @@ func main() {
 
 	//next its a special elemente that get the last unnused args
 	// read docs/Explanations/UnnusedMechanic.md
-
-	alsofirst = lib.getNextStringArg()
+	seccond = lib.getNextStringArg()
 
 }
