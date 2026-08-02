@@ -8,7 +8,7 @@ Covers installing the library and initializing it in a new program. Using the pa
 ## Workflow
 1. Install the lib:
    ```bash
-   go get github.com/MateusMoutinhoOrg/Verb@v0.0.7
+   go get github.com/MateusMoutinhoOrg/Verb@v0.0.1
    ```
 2. Create a file called `main.go` with the following code:
    ```go
