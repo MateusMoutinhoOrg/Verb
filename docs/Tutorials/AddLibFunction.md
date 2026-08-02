@@ -16,31 +16,33 @@ Covers adding a function to the library: declaring it as a field of the `Lib` st
 1. Declare the function as a field of the `Lib` struct in [sandbox/contracts/api/api.go](../../sandbox/contracts/api/api.go):
    ```go
    type Lib struct {
-       Deps deps.Deps
-       Set  func(key string, value string, ttlSeconds int)
-       Get  func(key string) (Entry, bool)
-       Has  func(key string) bool // new function
+       Deps           deps.Deps
+       Args           []string
+       Used           []bool
+       IsPresent      func(flags []string) bool
+       GetOptionsSize func(flags []string) int
+       HasOption      func(flags []string) bool // new function
    }
    ```
 2. Write its factory in a new or existing file in [sandbox/internal/lib/](../../sandbox/internal/lib/), with the identical signature, returning the closure:
    ```go
-   // HasFactory returns the closure that fills api.Lib.Has, reporting
-   // whether a live (non-expired) entry exists for key.
-   func HasFactory(l *api.Lib) func(key string) bool {
-       return func(key string) bool {
-           _, ok := l.Get(key)
-           return ok
+   // HasOptionFactory returns the closure that fills api.Lib.HasOption,
+   // reporting whether an option occurs at least once, without consuming it.
+   func HasOptionFactory(l *api.Lib) func(flags []string) bool {
+       return func(flags []string) bool {
+           return l.GetOptionsSize(flags) > 0
        }
    }
    ```
-   > Calling another field from inside a closure (`l.Get` above) is fine: by the time `Has` runs, `New` has already filled every field.
+   > Calling another field from inside a closure (`l.GetOptionsSize` above) is fine: by the time `HasOption` runs, `New` has already filled every field.
 3. Assign the factory's return value in the package's `New` constructor — without this line the field stays nil and the function panics when called:
    ```go
    func New(d deps.Deps) api.Lib {
-       l := api.Lib{Deps: d}
-       l.Set = SetFactory(&l)
-       l.Get = GetFactory(&l)
-       l.Has = HasFactory(&l) // register the new function
+       args := d.Args()
+       l := api.Lib{Deps: d, Args: args, Used: make([]bool, len(args))}
+       l.IsPresent = IsPresentFactory(&l)
+       l.GetOptionsSize = GetOptionsSizeFactory(&l)
+       l.HasOption = HasOptionFactory(&l) // register the new function
        return l
    }
    ```

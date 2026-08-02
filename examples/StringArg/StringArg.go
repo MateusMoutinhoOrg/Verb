@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
@@ -8,10 +9,15 @@ import (
 )
 
 func main() {
-	// Build deps via an adapter (JSON file store + real clock) and inject.
-	lib := verblib.New(verbadapter.New(os.Args))
-	// if we pass numbers, means exactly like that
-	// $ ./app test -> name == 'teste'
-	first := lib.getStringArg(0)
+	// Build deps via an adapter (the real process argv) and inject.
+	lib := verblib.New(verbadapter.New(os.Args[1:]))
 
+	// GetStringArg reads by absolute position: `./app test` -> index 0 is
+	// "test", regardless of what else is on the command line.
+	first, err := lib.GetStringArg(0)
+	if err != nil {
+		fmt.Println("arg 0 error:", err)
+		return
+	}
+	fmt.Println("first arg:", first)
 }

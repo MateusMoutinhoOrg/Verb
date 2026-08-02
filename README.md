@@ -5,7 +5,7 @@
 [![Go Version](https://img.shields.io/badge/go-%3E%3D1.22-blue)](go.mod)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-An OS-independent Go library template demonstrating **Dependency Injection** with a clean separation between pure library logic and adapter implementations.
+An OS-independent Go **argv parser** library demonstrating **Dependency Injection** with a clean separation between pure library logic and adapter implementations.
 
 ---
 
@@ -40,23 +40,27 @@ go get github.com/MateusMoutinhoOrg/Verb@v0.0.7
 package main
 
 import (
+    "os"
+
     verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
     verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
     // 1. Create deps via an adapter (the "opinionated" part:
-    //    JSON-file store + real clock)
-    deps := verbadapter.New("kvcache.json")
+    //    hands back the real process argv)
+    deps := verbadapter.New(os.Args[1:])
 
-    // 2. Inject deps into the pure library — a key/value cache with TTL
+    // 2. Inject deps into the pure library — an argv parser
     l := verblib.New(deps)
 
     // 3. Use the library — it never knows which adapter is behind the scenes
-    l.Set("greeting", "hello world", 60)
-    if entry, ok := l.Get("greeting"); ok {
-        println(entry.Value)
+    quiet := l.IsPresent([]string{"-q", "--quiet"})
+    output, err := l.GetStringOption([]string{"-o", "--output"}, 0)
+    if err != nil {
+        println("no output option given")
     }
+    println("quiet:", quiet, "output:", output)
 }
 ```
 
@@ -78,13 +82,13 @@ go run main.go
 
 ## Library Usage
 
-For consuming the lib as a user: install it, use the cache, and understand what the API offers.
+For consuming the lib as a user: install it, parse arguments, and understand what the API offers.
 
 | Doc | Description | Type |
 | --- | --- | --- |
 | [/docs/Tutorials/LibInitialization.md](/docs/Tutorials/LibInitialization.md) | Install the lib, create deps via an adapter, and run a first program | Tutorial |
-| [/docs/Tutorials/CacheValue.md](/docs/Tutorials/CacheValue.md) | Store a value with Set, read it back with Get, and handle a cache miss | Tutorial |
-| [/docs/Tutorials/InspectEntryExpiration.md](/docs/Tutorials/InspectEntryExpiration.md) | Read an entry's expiry with ExpiresAt and check it live with IsExpired | Tutorial |
+| [/docs/Tutorials/ParseOption.md](/docs/Tutorials/ParseOption.md) | Check a flag with IsPresent and read its value with GetStringOption | Tutorial |
+| [/docs/Tutorials/UseUnusedMechanic.md](/docs/Tutorials/UseUnusedMechanic.md) | Drain the leftover positional arguments with GetNextStringArg | Tutorial |
 | [/docs/Tutorials/RunSample.md](/docs/Tutorials/RunSample.md) | Browse and run the executable samples in the examples/ directory | Tutorial |
 | [/docs/References/PublicApi.md](/docs/References/PublicApi.md) | Index of all public structs, functions, and fields with detail links | Reference |
 | [/docs/References/Adapters.md](/docs/References/Adapters.md) | Lists every shipped adapter and when to use each one | Reference |
@@ -107,9 +111,11 @@ Creating and running the example programs under `examples/`.
 
 | Sample | Description |
 |----------|-------------|
-| [KvCacheSample](/examples/KvCacheSample/KvCacheSample.go) | Store and read a value from the TTL key/value cache |
-| [AuthTokenSample](/examples/AuthTokenSample/AuthTokenSample.go) | Cache a short-lived auth token, re-authenticating only after it expires |
-| [WebPageSample](/examples/WebPageSample/WebPageSample.go) | Cache a mutable web page for 60s, hitting the network only on a miss |
+| [Presence](/examples/Presence/Presence.go) | Check a boolean flag with IsPresent |
+| [Options](/examples/Options/Options.go) | Read every occurrence of a repeatable `--flag value` option |
+| [KeyValues](/examples/KeyValues/KeyValues.go) | Read every occurrence of a repeatable `key=value` argument |
+| [StringArg](/examples/StringArg/StringArg.go) | Read a positional argument by absolute index |
+| [NextArg](/examples/NextArg/NextArg.go) | Drain leftover positional arguments with the Unused Mechanic |
 
 ---
 

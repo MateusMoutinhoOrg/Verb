@@ -1,4 +1,4 @@
-# `api.Lib.Deps` / `api.Entry.Deps`
+# `api.Lib.Deps`
 
 **Type:** Field
 
@@ -10,9 +10,9 @@ Deps deps.Deps
 
 ## Description
 
-The injected dependency set the struct was built with. [`lib.New`](/docs/References/PublicApi/lib.New.md) writes it onto [`api.Lib`](/docs/References/PublicApi/api.Lib.md), and [`api.Lib.Get`](/docs/References/PublicApi/api.Get.md) propagates the same value onto every [`api.Entry`](/docs/References/PublicApi/api.Entry.md) it creates. Every other function field on those structs is a closure that reads this field at call time — it is how a dependency injected once reaches the whole object graph. See [DepsMechanic.md](/docs/Explanations/DepsMechanic.md).
+The injected dependency set the struct was built with. [`lib.New`](/docs/References/PublicApi/lib.New.md) writes it onto [`api.Lib`](/docs/References/PublicApi/api.Lib.md), and reads it exactly once — to call `Deps.Args()` and take the `Args` snapshot — before any function field is called. Every function field on `Lib` is a closure that reaches its behavior through `Args`/`Used` rather than through `Deps` directly, since parsing is pure computation once the argv is known. See [DepsMechanic.md](/docs/Explanations/DepsMechanic.md).
 
-The field is exported because the library's own factories, which live in another package, must read it. It is **not** a customization point: the closures captured the struct the factories ran over, so assigning to `Deps` on a struct you already hold changes nothing. To replace a behavior, patch the [`deps.Deps`](/docs/References/PublicApi/deps.Deps.md) value **before** passing it to `lib.New`.
+The field is exported because the library's own factories, which live in another package, must read it. It is **not** a customization point after construction: the snapshot in `Args` is already taken, so assigning to `Deps` on a struct you already hold changes nothing. To parse a different argv, patch the [`deps.Deps`](/docs/References/PublicApi/deps.Deps.md) value **before** passing it to `lib.New`.
 
 ## Returns
 
@@ -29,28 +29,23 @@ package main
 
 import (
 	"fmt"
-	"time"
 
-	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/memory"
+	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-	myDeps := verbadapter.New()
+	myDeps := verbadapter.New([]string{"-q"})
 
-	// Correct: replace the clock while it is still a plain deps value.
-	frozen := time.Unix(0, 0)
-	myDeps.Now = func() time.Time { return frozen }
+	// Correct: replace Args while it is still a plain deps value.
+	myDeps.Args = func() []string { return []string{"--quiet", "input.txt"} }
 
 	l := verblib.New(myDeps)
 
-	// Wrong: the factories already captured l — this assignment is inert.
-	l.Deps.Now = time.Now
+	// Wrong: New() already called Deps.Args() and snapshotted it into l.Args
+	// — this assignment is inert.
+	l.Deps.Args = func() []string { return nil }
 
-	l.Set("k", "v", 60)
-	frozen = time.Unix(120, 0) // past the TTL
-
-	_, ok := l.Get("k")
-	fmt.Println(ok) // false — the frozen clock is still the one in effect
+	fmt.Println(l.IsPresent([]string{"-q", "--quiet"})) // true
 }
 ```

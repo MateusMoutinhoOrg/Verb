@@ -6,21 +6,21 @@ import (
 )
 
 // TestFuncFactory returns the closure that fills api.Lib.TestFunc, which
-// exercises the embedded library reached through the Deps: it stores a
-// record, reads it back, and prints it. The embedded library is never
-// imported here — the adapter injects it as an verbdeps.Lib struct, so
-// calling it is just calling a function field.
+// exercises the embedded library reached through the Deps: it checks for a
+// verbose flag, reads the next unread positional argument, and prints both.
+// The embedded library is never imported here — the adapter injects it as a
+// verbdeps.Lib struct, so calling it is just calling a function field.
 func TestFuncFactory(l *api.Lib) func() {
 	return func() {
-		cache := l.Deps.CacheLib
-		cache.Set("greeting", "Hello World", 60)
+		parser := l.Deps.ArgvLib
+		verbose := parser.IsPresent([]string{"-v", "--verbose"})
 
-		entry, found := cache.Get("greeting")
-		if !found {
-			l.Deps.Println("greeting: not cached")
+		arg, err := parser.GetNextStringArg()
+		if err != nil {
+			l.Deps.Println("verbose:", verbose, "next arg:", err)
 			return
 		}
-		l.Deps.Println("greeting:", entry.Value, "expires at", entry.ExpiresAt, "expired:", entry.IsExpired())
+		l.Deps.Println("verbose:", verbose, "next arg:", arg)
 	}
 }
 

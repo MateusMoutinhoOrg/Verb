@@ -14,7 +14,7 @@ adapters/  ──▶  sandbox/  ◀──  examples/
 (reaches the OS)  (closed)     (wires the two together)
 ```
 
-- `sandbox/` is the library. It is closed: it imports only itself and OS-independent standard-library packages (`time`, `strings`, `errors`, …).
+- `sandbox/` is the library. It is closed: it imports only itself and OS-independent standard-library packages (`time`, `strings`, `strconv`, `errors`, …).
 - `adapters/` is outside the wall. It is the only place `os`, `net`, a database driver, or any third-party module may appear.
 - `examples/` is outside the wall too, and is the only place an adapter and the sandbox are named in the same file.
 
@@ -33,28 +33,28 @@ A file under `sandbox/` may not import:
 | Any third-party module | A dependency the caller cannot replace is a dependency the caller cannot test around. |
 | OS-bound stdlib (`os`, `net`, `os/exec`, `syscall`, …) | The effect belongs in an adapter, reached through a `Deps` field. |
 
-Everything the library needs from the outside world is declared as a function field on `Deps`:
+Everything the library needs from the outside world is declared as a function field on `Deps`. For an argv parser, reading the process's real command line is the only such effect:
 
 ```go
 // sandbox/contracts/deps/deps.go — the only door in the wall
 type Deps struct {
-	Now   func() time.Time                                                // instead of time.Now()
-	Load  func(key string) (value string, expiresAtUnix int64, ok bool)   // instead of os.ReadFile
-	Store func(key string, value string, expiresAtUnix int64)             // instead of os.WriteFile
+	Args func() []string // instead of os.Args
 }
 ```
 
-Inside the sandbox, the same behaviors are reached only through `l.Deps`:
+Inside the sandbox, that behavior is reached only through `l.Deps`, exactly once, when `lib.New` snapshots it:
 
 ```go
 // sandbox/internal/lib/lib.go — no os, no net, no third party
-func SetFactory(l *api.Lib) func(key string, value string, ttlSeconds int) {
-	return func(key string, value string, ttlSeconds int) {
-		expiresAt := l.Deps.Now().Add(time.Duration(ttlSeconds) * time.Second)
-		l.Deps.Store(key, value, expiresAt.Unix())
-	}
+func New(d deps.Deps) api.Lib {
+	args := d.Args()
+	l := api.Lib{Deps: d, Args: args, Used: make([]bool, len(args))}
+	// ...factories
+	return l
 }
 ```
+
+Everything downstream of that snapshot — matching flags, tracking used positions, parsing typed values with `strconv`/`time` — is pure computation over `l.Args`/`l.Used` and needs no further door in the wall.
 
 To add a new door, follow [AddDependency.md](/docs/Tutorials/AddDependency.md).
 
@@ -64,7 +64,7 @@ To add a new door, follow [AddDependency.md](/docs/Tutorials/AddDependency.md).
 
 The wall is not only about what the sandbox imports — it also limits what the outside may reach into. `sandbox/internal/` holds the **factories** that fill the contract structs, and it is protected by Go's `internal/` rule: only packages rooted at `sandbox/` can import it. An adapter or a consumer that tries gets a compile error, not a convention warning.
 
-Note what this does *not* hide. Because the factories fill the api structs directly, the structs the caller holds are the same ones the library works on — including their `Deps` field. What stays unreachable is the logic: a consumer can read `l.Deps`, but cannot call, replace, or re-run the factories that turned it into behavior.
+Note what this does *not* hide. Because the factories fill the api structs directly, the structs the caller holds are the same ones the library works on — including their `Deps`, `Args`, and `Used` fields. What stays unreachable is the logic: a consumer can read `l.Args`/`l.Used`, but cannot call, replace, or re-run the factories that turned them into behavior.
 
 So the outside world sees exactly three things:
 
@@ -93,13 +93,15 @@ It accepts a contract struct and returns a contract struct. The caller decides w
 
 ```go
 import (
+	"os"
+
 	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 // This line is in examples/, outside the wall — the only place
 // an adapter and the sandbox meet.
-l := verblib.New(verbadapter.New("data.json"))
+l := verblib.New(verbadapter.New(os.Args[1:]))
 ```
 
 For how the injected value then travels through the object graph, see [DepsMechanic.md](/docs/Explanations/DepsMechanic.md). For why the contracts are structs rather than interfaces, see [StructContracts.md](/docs/Explanations/StructContracts.md).

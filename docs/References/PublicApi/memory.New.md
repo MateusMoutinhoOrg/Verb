@@ -5,16 +5,18 @@
 ## Signature
 
 ```go
-func New() deps.Deps
+func New(args []string) deps.Deps
 ```
 
 ## Description
 
-Creates a [`deps.Deps`](/docs/References/PublicApi/deps.Deps.md) backed by the memory adapter: an in-memory map (guarded by a mutex) for storage and the real wall clock for `Now`. Nothing is persisted — the store vanishes when the process exits, which makes it the fastest choice for ephemeral caches and tests. The factory returns the **contract struct**, never the concrete `MemoryAdapter`, so consumers stay decoupled from the implementation — each field is filled by a factory whose closure reads the adapter instance, which is how the map travels with the deps. For all shipped adapters, see [Adapters.md](/docs/References/Adapters.md).
+Creates a [`deps.Deps`](/docs/References/PublicApi/deps.Deps.md) backed by the memory adapter: it hands back a fixed, in-memory `args` slice instead of a real process's argv. It exists for tests and scripted scenarios — hand it any `[]string` literal and get a `deps.Deps` that parses exactly that, with no dependency on the actual `os.Args` the test binary was invoked with. The factory returns the **contract struct**, never the concrete `MemoryAdapter`, so consumers stay decoupled from the implementation. For all shipped adapters, see [Adapters.md](/docs/References/Adapters.md).
 
 ## Parameters
 
-_None._
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `args` | `[]string` | The fixed argument vector to parse. |
 
 ## Returns
 
@@ -35,12 +37,9 @@ import (
 )
 
 func main() {
-	d := verbadapter.New()
+	d := verbadapter.New([]string{"-q", "input.txt"})
 	l := verblib.New(d)
 
-	l.Set("greeting", "hello world", 60)
-	if entry, ok := l.Get("greeting"); ok {
-		fmt.Println(entry.Value) // hello world — gone when the process exits
-	}
+	fmt.Println(l.IsPresent([]string{"-q", "--quiet"})) // true
 }
 ```

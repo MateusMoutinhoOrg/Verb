@@ -12,7 +12,7 @@ Defines the **factory pattern**, the single way any struct of function fields is
 #### One Field, One Factory
 - One factory per field, named `<Field>Factory` after the field it fills — `SetFactory` fills `Set`, `NowFactory` fills `Deps.Now`.
 - The body returns a single value for that field, and touches no other field.
-- A function field's factory returns a **closure**; a plain struct field's factory returns a **value** (e.g. `CacheLibFactory` in `bootstrap/adapters/standard/`).
+- A function field's factory returns a **closure**; a plain struct field's factory returns a **value** (e.g. `ArgvLibFactory` in `bootstrap/adapters/standard/`).
 - The returned closure's signature must match the field's declaration in the contract exactly.
 
 #### State Is Read Through the Pointer

@@ -14,30 +14,24 @@ Covers adding a requirement to the `Deps` contract in [sandbox/contracts/deps/de
 1. Add the field to the `Deps` struct in [sandbox/contracts/deps/deps.go](../../sandbox/contracts/deps/deps.go), named after the behavior it provides:
    ```go
    type Deps struct {
-       Now    func() time.Time
-       Load   func(key string) (value string, expiresAtUnix int64, ok bool)
-       Store  func(key string, value string, expiresAtUnix int64)
-       Delete func(key string) // new requirement
+       Args func() []string
+       Env  func() []string // new requirement, e.g. os.Environ()
    }
    ```
 2. Write a `<Field>Factory` for the new field on every adapter under [adapters/](../../adapters/), returning the closure, and assign its return value from that adapter's `New`, following the adapter specification located in [Specs.md](/docs/References/Specs.md):
    ```go
-   // DeleteFactory returns the closure that fills the new deps.Deps.Delete
-   // requirement, removing a record from the store.
-   func DeleteFactory(s *StandardAdapter) func(key string) {
-       return func(key string) {
-           s.mu.Lock()
-           defer s.mu.Unlock()
-           delete(s.store, key)
+   // EnvFactory returns the closure that fills the new deps.Deps.Env
+   // requirement, handing back the environment the adapter was given.
+   func EnvFactory(s *StandardAdapter) func() []string {
+       return func() []string {
+           return s.env
        }
    }
 
-   func New(filePath string) deps.Deps {
-       adapter := &StandardAdapter{filePath: filePath}
-       adapter.Deps.Now = NowFactory(adapter)
-       adapter.Deps.Load = LoadFactory(adapter)
-       adapter.Deps.Store = StoreFactory(adapter)
-       adapter.Deps.Delete = DeleteFactory(adapter) // assign the new field's factory
+   func New(args []string, env []string) deps.Deps {
+       adapter := &StandardAdapter{args: args, env: env}
+       adapter.Deps.Args = ArgsFactory(adapter)
+       adapter.Deps.Env = EnvFactory(adapter) // assign the new field's factory
        return adapter.Deps
    }
    ```
@@ -50,5 +44,5 @@ Covers adding a requirement to the `Deps` contract in [sandbox/contracts/deps/de
 6. Build the project and run a sample — an unfilled field surfaces at runtime, not at build time:
    ```bash
    go build ./...
-   go run ./examples/KvCacheSample/KvCacheSample.go
+   go run ./examples/Options/Options.go --username alice
    ```

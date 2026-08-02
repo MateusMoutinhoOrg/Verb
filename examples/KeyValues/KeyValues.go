@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
@@ -8,17 +9,20 @@ import (
 )
 
 func main() {
-	// Build deps via an adapter (JSON file store + real clock) and inject.
-	lib := verblib.New(verbadapter.New(os.Args))
+	// Build deps via an adapter (the real process argv) and inject.
+	lib := verblib.New(verbadapter.New(os.Args[1:]))
 
+	// GetKeyValuesSize counts every "username=<value>" / "user=<value>"
+	// argument without consuming anything.
 	size := lib.GetKeyValuesSize([]string{"username=", "user="})
 	for i := 0; i < size; i++ {
-
-		//will get all "username=<value>", if a value is not present , will raize a error
-		current_username := lib.GetStringKeyValues([]string{"username=", "user="}, i)
-		println("username: ", current_username)
+		// GetStringKeyValues marks the i-th matching argument as used and
+		// returns the text after "=", or an error if the value is empty.
+		currentUsername, err := lib.GetStringKeyValues([]string{"username=", "user="}, i)
+		if err != nil {
+			fmt.Println("username error:", err)
+			continue
+		}
+		fmt.Println("username:", currentUsername)
 	}
-
-	//marks --username and <value>  as used args
-
 }

@@ -1,66 +1,35 @@
 package memory
 
 import (
-	"sync"
-	"time"
-
 	"github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/deps"
 )
 
-// record is one stored value together with the moment it expires.
-type record struct {
-	value         string
-	expiresAtUnix int64
-}
-
-// MemoryAdapter fills deps.Deps keeping everything in memory.
-// Records live in a map guarded by a mutex — nothing is persisted, so
-// the store vanishes when the process exits — and Now reads the real
-// wall clock.
+// MemoryAdapter fills deps.Deps with a fixed, in-memory argument slice
+// instead of a real process's argv. It exists for tests and scripted
+// scenarios: hand it any []string literal and get a deps.Deps that parses
+// exactly that, with no dependency on the actual os.Args the test binary
+// was invoked with.
 type MemoryAdapter struct {
 	// Deps is the contract this adapter fills; its factories assign into it.
-	Deps  deps.Deps
-	mu    sync.RWMutex
-	store map[string]record
+	Deps deps.Deps
+	args []string
 }
 
-// NowFactory returns the closure that fills deps.Deps.Now, returning the
-// real current time.
-func NowFactory(m *MemoryAdapter) func() time.Time {
-	return func() time.Time {
-		return time.Now()
-	}
-}
-
-// LoadFactory returns the closure that fills deps.Deps.Load, fetching a
-// record from the in-memory map.
-func LoadFactory(m *MemoryAdapter) func(key string) (value string, expiresAtUnix int64, ok bool) {
-	return func(key string) (value string, expiresAtUnix int64, ok bool) {
-		m.mu.RLock()
-		defer m.mu.RUnlock()
-		r, ok := m.store[key]
-		return r.value, r.expiresAtUnix, ok
-	}
-}
-
-// StoreFactory returns the closure that fills deps.Deps.Store, writing a
-// record into the in-memory map.
-func StoreFactory(m *MemoryAdapter) func(key string, value string, expiresAtUnix int64) {
-	return func(key string, value string, expiresAtUnix int64) {
-		m.mu.Lock()
-		defer m.mu.Unlock()
-		m.store[key] = record{value: value, expiresAtUnix: expiresAtUnix}
+// ArgsFactory returns the closure that fills deps.Deps.Args, handing back
+// the fixed argument slice the adapter was constructed with.
+func ArgsFactory(m *MemoryAdapter) func() []string {
+	return func() []string {
+		return m.args
 	}
 }
 
 // New creates a deps.Deps backed by the memory adapter, ready for lib.New.
-// It builds the adapter instance and runs every field factory over it, so each
-// closure reads the adapter's in-memory map at call time. Adding a field to
-// deps.Deps means adding its factory call here.
-func New() deps.Deps {
-	adapter := &MemoryAdapter{store: make(map[string]record)}
-	adapter.Deps.Now = NowFactory(adapter)
-	adapter.Deps.Load = LoadFactory(adapter)
-	adapter.Deps.Store = StoreFactory(adapter)
+// args is the fixed argument vector to parse, useful for tests that want a
+// known, repeatable argv instead of the real process arguments. It builds
+// the adapter instance and runs every field factory over it. Adding a field
+// to deps.Deps means adding its factory call here.
+func New(args []string) deps.Deps {
+	adapter := &MemoryAdapter{args: args}
+	adapter.Deps.Args = ArgsFactory(adapter)
 	return adapter.Deps
 }

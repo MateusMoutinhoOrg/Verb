@@ -12,22 +12,23 @@ Explains how the library receives its dependencies. `Deps` is a **struct of func
 ```go
 // sandbox/contracts/deps/deps.go — what the library needs
 type Deps struct {
-	Now   func() time.Time
-	Load  func(key string) (value string, expiresAtUnix int64, ok bool)
-	Store func(key string, value string, expiresAtUnix int64)
+	Args func() []string
 }
 
 // sandbox/contracts/api/api.go — what the library returns
 type Lib struct {
-	Deps deps.Deps
-	Set  func(key string, value string, ttlSeconds int)
-	Get  func(key string) (Entry, bool)
+	Deps      deps.Deps
+	Args      []string
+	Used      []bool
+	IsPresent func(flags []string) bool
+	// ...GetStringOption, GetStringArg, GetNextStringArg, GetStringKeyValues,
+	// and their Int/Double/Timestamp variants
 }
 ```
 
 `lib.New(deps.Deps) api.Lib` is the single wiring point. Because both sides are plain structs, `sandbox` never imports an adapter, and callers never import `sandbox/internal/`. For why the contracts are structs rather than interfaces, see [StructContracts.md](/docs/Explanations/StructContracts.md).
 
-`Deps` is the *only* door in the sandbox wall: since nothing under `sandbox/` may import an adapter, a third-party module, or an OS-bound standard-library package, every effect the library performs has to be a field on this struct. That constraint is what this page's mechanic exists to serve — see [SandboxIsolation.md](/docs/Explanations/SandboxIsolation.md).
+`Deps` is the *only* door in the sandbox wall: since nothing under `sandbox/` may import an adapter, a third-party module, or an OS-bound standard-library package, every effect the library performs has to be a field on this struct. An argv parser needs exactly one such effect — reading the raw argument vector — so `Deps` has exactly one field. That constraint is what this page's mechanic exists to serve — see [SandboxIsolation.md](/docs/Explanations/SandboxIsolation.md).
 
 ---
 
@@ -39,18 +40,19 @@ The simplest setup: an adapter builds a ready-to-use `deps.Deps`.
 package main
 
 import (
+	"os"
+
 	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 )
 
 func main() {
-	// The standard adapter fills every field of deps.Deps
-	myDeps := verbadapter.New("data.json")
+	// The standard adapter fills deps.Deps.Args with the real process argv
+	myDeps := verbadapter.New(os.Args[1:])
 	l := verblib.New(myDeps)
 
-	l.Set("greeting", "hello world", 60)
-	if entry, ok := l.Get("greeting"); ok {
-		println(entry.Value)
+	if l.IsPresent([]string{"-q", "--quiet"}) {
+		println("quiet mode")
 	}
 }
 ```
@@ -59,15 +61,13 @@ func main() {
 
 ## Overwriting a Single Behavior
 
-To keep an adapter but change one behavior, take the `deps.Deps` it returns and assign the field you want to replace. Every other field keeps the adapter's implementation — no embedding, no wrapper type.
-
-This is exactly how you test expiry without waiting: keep the standard store, but replace `Now` so the clock is under your control.
+To keep an adapter but change one behavior, take the `deps.Deps` it returns and assign the field you want to replace. With a single-field contract this mostly means replacing `Args` wholesale — e.g. testing against a fixed argv instead of the real one, without switching adapters at all.
 
 ```go
 package main
 
 import (
-	"time"
+	"os"
 
 	verbadapter "github.com/MateusMoutinhoOrg/Verb/adapters/standard"
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
@@ -75,24 +75,18 @@ import (
 
 func main() {
 	// 1. Get the default implementation from an adapter
-	myDeps := verbadapter.New("data.json")
+	myDeps := verbadapter.New(os.Args[1:])
 
-	// 2. Replace only the clock — Load and Store stay as the adapter built them
-	now := time.Unix(0, 0)
-	myDeps.Now = func() time.Time { return now }
+	// 2. Replace Args with a fixed slice for a dry run, ignoring the real argv
+	myDeps.Args = func() []string { return []string{"--quiet", "input.txt"} }
 
 	// 3. Inject — the lib sees a normal deps.Deps
 	l := verblib.New(myDeps)
-	l.Set("k", "v", 60) // expires 60s after time 0
-
-	// 4. Jump the clock past expiry — no real waiting needed
-	now = time.Unix(120, 0)
-	_, ok := l.Get("k")
-	println(ok) // false — expired
+	println(l.IsPresent([]string{"-q", "--quiet"})) // true
 }
 ```
 
-> **Careful:** patch the `deps.Deps` value **before** calling `lib.New`. The library's factories close over the `api.Lib` they were run over, so assigning to `l.Deps.Now` on the returned struct changes nothing. Swapping the *variable* a field's closure captured — as `now` is swapped in step 4 above — works, because that happens inside the function the adapter's field already points at.
+> **Careful:** patch the `deps.Deps` value **before** calling `lib.New`. `lib.New` calls `Deps.Args()` exactly once to take its snapshot, so replacing `Args` on the `api.Lib` returned by `verblib.New` has no effect — the snapshot is already taken.
 
 ---
 
@@ -104,35 +98,25 @@ For complete control, build the `deps.Deps` yourself. No adapter is involved: it
 package main
 
 import (
-	"time"
-
 	verblib "github.com/MateusMoutinhoOrg/Verb/sandbox"
 	verbdeps "github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/deps"
 )
 
 func main() {
-	// 1. Build your own implementation, keeping records in a plain map
-	store := map[string]string{}
-
+	// 1. Build your own implementation, hard-coding the argv to parse
 	myDeps := verbdeps.Deps{
-		Now: time.Now,
-		Load: func(key string) (string, int64, bool) {
-			v, ok := store[key]
-			return v, time.Now().Add(time.Hour).Unix(), ok
-		},
-		Store: func(key, value string, expiresAtUnix int64) {
-			store[key] = value
-		},
+		Args: func() []string { return []string{"-o", "out.txt", "in.txt"} },
 	}
 
 	// 2. Inject it into the library
 	l := verblib.New(myDeps)
 
 	// 3. Use the library normally
-	l.Set("k", "v", 60)
-	if entry, ok := l.Get("k"); ok {
-		println(entry.Value)
+	output, err := l.GetStringOption([]string{"-o", "--output"}, 0)
+	if err != nil {
+		panic(err)
 	}
+	println(output)
 }
 ```
 
@@ -142,7 +126,7 @@ func main() {
 
 ## Propagation
 
-`lib.New` delegates to the constructor in `sandbox/internal/lib/`, which stores the `Deps` on the `api.Lib` struct itself and then runs the factories over it:
+`lib.New` delegates to the constructor in `sandbox/internal/lib/`, which snapshots `Deps.Args()`, stores the `Deps` and the snapshot on the `api.Lib` struct itself, and then runs the factories over it:
 
 ```go
 // sandbox/new.go
@@ -152,40 +136,43 @@ func New(d deps.Deps) api.Lib {
 
 // sandbox/internal/lib/lib.go
 func New(d deps.Deps) api.Lib {
-	l := api.Lib{Deps: d}
-	l.Set = SetFactory(&l)
-	l.Get = GetFactory(&l)
+	args := d.Args()
+	l := api.Lib{Deps: d, Args: args, Used: make([]bool, len(args))}
+	l.IsPresent = IsPresentFactory(&l)
+	l.GetStringOption = GetStringOptionFactory(&l)
+	// ...every other field factory
 	return l
 }
 ```
 
-The carrier is the **closure**. Each factory returns a closure that reads `l.Deps` when the field is called, and `New` assigns it:
+The carrier is the **closure**. Each factory returns a closure that reads and mutates `l.Args`/`l.Used` when the field is called, and `New` assigns it:
 
 ```go
 // sandbox/internal/lib/lib.go
-func SetFactory(l *api.Lib) func(key string, value string, ttlSeconds int) {
-	return func(key string, value string, ttlSeconds int) {
-		expiresAt := l.Deps.Now().Add(time.Duration(ttlSeconds) * time.Second)
-		l.Deps.Store(key, value, expiresAt.Unix())
+func IsPresentFactory(l *api.Lib) func(flags []string) bool {
+	return func(flags []string) bool {
+		for i, a := range l.Args {
+			if l.Used[i] {
+				continue
+			}
+			if matchesFlag(a, flags) {
+				l.Used[i] = true
+				return true
+			}
+		}
+		return false
 	}
 }
 ```
 
-Every object the lib creates receives the same `Deps`, passed into the object package's `New` constructor, which stores it on the object's own api struct before running that object's factories:
-
-```go
-// sandbox/internal/lib/lib.go — inside GetFactory's closure
-e := entry.New(l.Deps, value, expiresAtUnix)
-```
-
-So a dependency injected once is reachable from anywhere in the object graph — that is why an `Entry` can consult the injected clock in `IsExpired`.
+Because every factory closes over the **same** `*api.Lib` that `New` built, a call to `IsPresent` marking an index used is visible to every later call to `GetNextStringArg` on the same `Lib` — that shared, mutable `Used` slice is what makes the Unused Mechanic work. See [UnnusedMechanic.md](/docs/Explanations/UnnusedMechanic.md).
 
 ```
 standard.New() ──▶ deps.Deps ──▶ lib.New(deps) ──▶ api.Lib
                                                      │
-                                             Get() (propagates Deps)
+                                          snapshots Deps.Args() once
                                                      ▼
-                                                api.Entry
+                                       Args []string, Used []bool
 ```
 
 To add a new behavior to the contract, follow [AddDependency.md](/docs/Tutorials/AddDependency.md).

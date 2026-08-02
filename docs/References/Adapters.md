@@ -9,5 +9,5 @@ Lists every adapter shipped with the library — the opinionated `deps.Deps` imp
 
 | Adapter | Factory | Behavior | Use When |
 |---------|---------|----------|----------|
-| `standard` | [standard.New](/docs/References/PublicApi/standard.New.md) | Single JSON file at a caller-chosen path; real wall clock | You want the default, with values surviving across runs |
-| `memory` | [memory.New](/docs/References/PublicApi/memory.New.md) | In-memory map guarded by a mutex; real wall clock | You want the fastest store and don't need values after the process exits |
+| `standard` | [standard.New](/docs/References/PublicApi/standard.New.md) | Hands back the argv slice it was constructed with — pass `os.Args[1:]` for the real process command line | You want to parse the program's actual command-line arguments |
+| `memory` | [memory.New](/docs/References/PublicApi/memory.New.md) | Hands back a fixed, caller-supplied `[]string` regardless of the real process argv | You're writing a test or script and want a known, repeatable argv |

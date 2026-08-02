@@ -99,9 +99,9 @@ A second, self-contained Verb library — same three trees (`sandbox/`, `adapter
 
 | Path | Description |
 |------|-------------|
-| `sandbox/contracts/deps/deps.go` | The `Deps` struct, including `CacheLib` — the embedded library, held as a locally declared contract struct |
+| `sandbox/contracts/deps/deps.go` | The `Deps` struct, including `ArgvLib` — the embedded library, held as a locally declared contract struct |
 | `sandbox/contracts/deps/verbdeps/verbdeps.go` | Copy of the embedded library's `api` structs, declared inside the sandbox so the sandbox never imports the embedded library |
-| `adapters/<name>/<name>.go` | Its `CacheLibFactory` initializes the embedded library with the embedded library's own adapter, and copies its `api` fields onto the local `verbdeps` ones |
+| `adapters/<name>/<name>.go` | Its `ArgvLibFactory` initializes the embedded library with the embedded library's own adapter, and copies its `api` fields onto the local `verbdeps` ones |
 | `examples/<example>/<example>.go` | Self-contained `package main` wiring a bootstrap adapter into the bootstrap lib |
 
 The copying lives in the adapter because only code outside the sandbox may import the embedded library. Because both sides are structs of function fields, the copy is field assignment: a wrapper is needed only where a named type differs between the two declarations. See [StructContracts.md](/docs/Explanations/StructContracts.md).

@@ -18,62 +18,52 @@ Covers creating a new opinionated implementation of the `Deps` contract under [a
 1. Create the adapter directory and its file, both named after the adapter (e.g., `adapters/memory/memory.go`).
 2. Declare the package and the adapter struct — the **carrier**, leading with the `Deps` field its factories fill, followed by its configuration and state:
    ```go
-   package frozen
+   package responsefile
 
    import (
-       "time"
+       "os"
+       "strings"
 
        "github.com/MateusMoutinhoOrg/Verb/sandbox/contracts/deps"
    )
 
-   // FrozenAdapter fills deps.Deps with a fixed clock, so expiry
-   // is deterministic. Records are kept in a map.
-   type FrozenAdapter struct {
+   // ResponseFileAdapter fills deps.Deps by reading the argv to parse from a
+   // "response file" — one argument per line — instead of the real os.Args.
+   type ResponseFileAdapter struct {
        // Deps is the contract this adapter fills; its factories assign into it.
-       Deps  deps.Deps
-       now   time.Time
-       store map[string]record
-   }
-
-   type record struct {
-       value         string
-       expiresAtUnix int64
+       Deps     deps.Deps
+       filePath string
    }
    ```
 3. Write one `<Field>Factory` per field of the `Deps` contract, each returning a single closure that reads the adapter's state through the pointer:
    ```go
-   // NowFactory returns the closure that fills deps.Deps.Now, returning the
-   // adapter's fixed clock.
-   func NowFactory(f *FrozenAdapter) func() time.Time {
-       return func() time.Time { return f.now }
-   }
-
-   // LoadFactory returns the closure that fills deps.Deps.Load, fetching a
-   // record from the map.
-   func LoadFactory(f *FrozenAdapter) func(key string) (string, int64, bool) {
-       return func(key string) (string, int64, bool) {
-           r, ok := f.store[key]
-           return r.value, r.expiresAtUnix, ok
-       }
-   }
-
-   // StoreFactory returns the closure that fills deps.Deps.Store, writing a
-   // record into the map.
-   func StoreFactory(f *FrozenAdapter) func(key, value string, expiresAtUnix int64) {
-       return func(key, value string, expiresAtUnix int64) {
-           f.store[key] = record{value: value, expiresAtUnix: expiresAtUnix}
+   // ArgsFactory returns the closure that fills deps.Deps.Args, reading the
+   // response file and splitting it one argument per line.
+   func ArgsFactory(f *ResponseFileAdapter) func() []string {
+       return func() []string {
+           raw, err := os.ReadFile(f.filePath)
+           if err != nil {
+               return nil
+           }
+           lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
+           args := make([]string, 0, len(lines))
+           for _, line := range lines {
+               if line = strings.TrimSpace(line); line != "" {
+                   args = append(args, line)
+               }
+           }
+           return args
        }
    }
    ```
-   Reading `f.now` and `f.store` inside the closure — instead of capturing them when the factory runs — is what carries the adapter's live state into the library.
+   Reading `f.filePath` inside the closure — instead of reading and splitting the file when the factory runs — is what keeps the argv current if the file changes before `Args` is called.
 4. Expose the `New` constructor: build the adapter instance, run every field factory over it, assign each return value into its matching field, and return its `Deps`:
    ```go
-   // New creates a deps.Deps whose clock is frozen at the given time.
-   func New(now time.Time) deps.Deps {
-       adapter := &FrozenAdapter{now: now, store: make(map[string]record)}
-       adapter.Deps.Now = NowFactory(adapter)
-       adapter.Deps.Load = LoadFactory(adapter)
-       adapter.Deps.Store = StoreFactory(adapter)
+   // New creates a deps.Deps that parses the argv found in filePath, one
+   // argument per line, instead of the real process argv.
+   func New(filePath string) deps.Deps {
+       adapter := &ResponseFileAdapter{filePath: filePath}
+       adapter.Deps.Args = ArgsFactory(adapter)
        return adapter.Deps
    }
    ```
